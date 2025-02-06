@@ -1,14 +1,14 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import HomeScreen from "../screens/HomeScreen";
-import SearchScreen from "../screens/SearchScreen";
+import HomeScreen from "../screens/Home/HomeScreen";
+import SearchScreen from "../screens/Home/SearchScreen";
 import ProfileScreen from "../screens/Profile/ProfileScreen";
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, TouchableOpacity } from "react-native";
+import Icon from "react-native-vector-icons/Ionicons"; // Iconları ekledik
 
 // Tab navigator oluştur
 const Tab = createBottomTabNavigator();
 
-// Orta button bileşeni (Görseldeki gibi ortada büyük olacak)
 const CustomTabButton = ({ children, onPress }) => (
   <TouchableOpacity
     style={{
@@ -37,7 +37,6 @@ const CustomTabButton = ({ children, onPress }) => (
   </TouchableOpacity>
 );
 
-// Bottom Tab Navigator bileşeni
 const BottomTabNavigator = () => {
   return (
     <Tab.Navigator
@@ -54,22 +53,67 @@ const BottomTabNavigator = () => {
           shadowRadius: 4,
           elevation: 5,
         },
+        headerShown: false,
       }}
     >
-      <Tab.Screen name="Anasayfa" component={HomeScreen} />
-      <Tab.Screen name="Search" component={SearchScreen} />
-
-      {/* Orta Button */}
       <Tab.Screen
-        name="Add"
-        component={HomeScreen} // Butona basınca hangi ekran açılsın?
+        name="Anasayfa"
+        component={HomeScreen}
         options={{
-          tabBarButton: (props) => <CustomTabButton {...props} />,
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="home-outline" color={color} size={size} />
+          ),
+          tabBarIconStyle: {
+            marginTop: 5,
+          },
+        }}
+      />
+      <Tab.Screen
+        name="Search"
+        component={SearchScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="search-outline" color={color} size={size} />
+          ),
+          tabBarIconStyle: {
+            marginTop: 5,
+          },
         }}
       />
 
-      <Tab.Screen name="Favorites" component={HomeScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+      {/* Orta Buton */}
+      {/* <Tab.Screen
+        name="Add"
+        component={HomeScreen}
+        options={{
+          tabBarButton: (props) => <CustomTabButton {...props} />,
+        }}
+      /> */}
+
+      <Tab.Screen
+        name="Favorites"
+        component={HomeScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="heart-outline" color={color} size={size} />
+          ),
+          tabBarIconStyle: {
+            marginTop: 5,
+          },
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="person-outline" color={color} size={size} />
+          ),
+          tabBarIconStyle: {
+            marginTop: 5,
+          },
+        }}
+      />
     </Tab.Navigator>
   );
 };
