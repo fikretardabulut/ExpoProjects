@@ -1,11 +1,22 @@
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
-import BottomTabNavigator from "./src/navigation/BottomTabNavigator"; // Kendi navigator dosyan
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import AuthNavigator from "./src/navigation/AuthNavigator";
+import BottomTabNavigator from "./src/navigation/BottomTabNavigator";
+
+const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
     <NavigationContainer>
-      <BottomTabNavigator />
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false,
+        }}
+      >
+        <Stack.Screen name="Auth" component={AuthNavigator} />
+        <Stack.Screen name="MainApp" component={BottomTabNavigator} />
+      </Stack.Navigator>
     </NavigationContainer>
   );
 }

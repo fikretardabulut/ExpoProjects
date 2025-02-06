@@ -15,13 +15,15 @@ import {
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 
-const RegisterScreen = () => {
+const BusinessRegisterScreen = () => {
   const navigation = useNavigation();
   const [formData, setFormData] = useState({
-    fullName: '',
-    username: '',
+    businessName: '',
+    ownerName: '',
     email: '',
     phone: '',
+    address: '',
+    taxNumber: '',
     password: '',
     confirmPassword: '',
   });
@@ -31,8 +33,9 @@ const RegisterScreen = () => {
 
   const handleRegister = async () => {
     // Form validasyonu
-    if (!formData.fullName || !formData.username || !formData.email || 
-        !formData.phone || !formData.password || !formData.confirmPassword) {
+    if (!formData.businessName || !formData.ownerName || !formData.email || 
+        !formData.phone || !formData.address || !formData.taxNumber || 
+        !formData.password || !formData.confirmPassword) {
       Alert.alert('Uyarı', 'Lütfen tüm alanları doldurun');
       return;
     }
@@ -59,7 +62,7 @@ const RegisterScreen = () => {
       if (response.success) {
         Alert.alert(
           'Başarılı',
-          'Kayıt işleminiz başarıyla tamamlandı. Şimdi giriş yapabilirsiniz.',
+          'İşletme kaydınız başarıyla tamamlandı. Şimdi giriş yapabilirsiniz.',
           [
             {
               text: 'Tamam',
@@ -99,30 +102,29 @@ const RegisterScreen = () => {
             >
               <Icon name="arrow-left" size={24} color="#333" />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Kayıt Ol</Text>
+            <Text style={styles.headerTitle}>İşletme Kaydı</Text>
             <View style={styles.headerRight} />
           </View>
 
           {/* Form */}
           <View style={styles.form}>
             <View style={styles.inputContainer}>
-              <Icon name="account" size={20} color="#666" style={styles.inputIcon} />
+              <Icon name="domain" size={20} color="#666" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Ad Soyad"
-                value={formData.fullName}
-                onChangeText={(text) => updateFormData('fullName', text)}
+                placeholder="İşletme Adı"
+                value={formData.businessName}
+                onChangeText={(text) => updateFormData('businessName', text)}
               />
             </View>
 
             <View style={styles.inputContainer}>
-              <Icon name="account-circle" size={20} color="#666" style={styles.inputIcon} />
+              <Icon name="account" size={20} color="#666" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Kullanıcı Adı"
-                value={formData.username}
-                onChangeText={(text) => updateFormData('username', text)}
-                autoCapitalize="none"
+                placeholder="İşletme Sahibi Ad Soyad"
+                value={formData.ownerName}
+                onChangeText={(text) => updateFormData('ownerName', text)}
               />
             </View>
 
@@ -146,6 +148,29 @@ const RegisterScreen = () => {
                 value={formData.phone}
                 onChangeText={(text) => updateFormData('phone', text)}
                 keyboardType="phone-pad"
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Icon name="map-marker" size={20} color="#666" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="İşletme Adresi"
+                value={formData.address}
+                onChangeText={(text) => updateFormData('address', text)}
+                multiline
+                numberOfLines={2}
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Icon name="file-document" size={20} color="#666" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Vergi Numarası"
+                value={formData.taxNumber}
+                onChangeText={(text) => updateFormData('taxNumber', text)}
+                keyboardType="number-pad"
               />
             </View>
 
@@ -200,8 +225,8 @@ const RegisterScreen = () => {
                 <ActivityIndicator color="#FFF" />
               ) : (
                 <>
-                  <Icon name="account-plus" size={20} color="#FFF" />
-                  <Text style={styles.registerButtonText}>Kayıt Ol</Text>
+                  <Icon name="domain-plus" size={20} color="#FFF" />
+                  <Text style={styles.registerButtonText}>İşletme Kaydı Oluştur</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -311,4 +336,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default RegisterScreen;
+export default BusinessRegisterScreen; 

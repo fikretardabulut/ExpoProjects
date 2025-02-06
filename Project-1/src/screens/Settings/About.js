@@ -42,7 +42,7 @@ const About = () => {
   const navigation = useNavigation();
 
   const handleWebsite = () => {
-    Linking.openURL('https://www.smartcity.com');
+    Linking.openURL('https://www.catenasoft.com');
   };
 
   const handleRateApp = () => {
@@ -88,7 +88,7 @@ const About = () => {
             <InfoItem
               icon="update"
               title="Son Güncelleme"
-              value="1 Mart 2024"
+              value="6 Şubat 2025"
             />
             <InfoItem
               icon="cellphone"
@@ -115,7 +115,7 @@ const About = () => {
             <LinkItem
               icon="web"
               title="Web Sitemiz"
-              subtitle="www.smartcity.com"
+              subtitle="www.catenasoft.com"
               onPress={handleWebsite}
             />
             <LinkItem
@@ -144,7 +144,7 @@ const About = () => {
           <Text style={styles.sectionTitle}>Geliştirici</Text>
           <View style={styles.developerInfo}>
             <Text style={styles.developerText}>
-              © 2024 Smart City Platform. Tüm hakları saklıdır.
+              © 2025 Akıllı Şehit Platform. Tüm hakları saklıdır.
             </Text>
             <Text style={styles.developerSubtext}>
               Türkiye'de ❤️ ile geliştirildi
