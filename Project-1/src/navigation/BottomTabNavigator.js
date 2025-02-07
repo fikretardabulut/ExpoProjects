@@ -27,14 +27,41 @@ import HelpCenter from "../screens/Settings/HelpCenter";
 import About from "../screens/Settings/About";
 import Legal from "../screens/Settings/Legal";
 
+// ********** Screens/Appointments **********
 import NewAppointment from "../screens/Appointments/NewAppointment";
 import AppointmentDetails from "../screens/Appointments/AppointmentDetails";
 import ReminderSettings from "../screens/Settings/ReminderSettings";
+import MyAppointments from "../screens/Appointments/MyAppointments";
+import BookAppointment from '../screens/Appointments/BookAppointment';
+
+// ********** Screens/Reviews **********
+import MyReviews from "../screens/Reviews/MyReviews";
+
+// ********** Screens/Favorites **********
+import FavoritePlaces from "../screens/Favorites/FavoritePlaces";
+
+// ********** Screens/Legal **********
+import PrivacyPolicy from "../screens/Settings/PrivacyPolicy";
+import TermsOfService from "../screens/Settings/TermsOfService";
+import Licenses from "../screens/Settings/Licenses";
+import KVKKCompliance from "../screens/Settings/KVKKCompliance";
+import CookiePolicy from "../screens/Settings/CookiePolicy";
+import AddNewAddress from "../screens/Settings/AddNewAddress";
 
 import NotificationSettings from "../screens/Settings/NotificationSettings";
 
+// Import new screens
+import FAQ from '../screens/Settings/FAQ';
+import UserGuide from '../screens/Settings/UserGuide';
+import VideoGuides from '../screens/Settings/VideoGuides';
+import BusinessDetail from '../screens/Business/BusinessDetail';
+import CategoryDetail from '../screens/Home/CategoryDetail';
+import FeaturedBusinesses from '../screens/Home/FeaturedBusinesses';
+import PopularBusinesses from '../screens/Home/PopularBusinesses';
+
 const Tab = createBottomTabNavigator();
 const ProfileStack = createNativeStackNavigator();
+const HomeStack = createNativeStackNavigator();
 
 const CustomTabButton = ({ children, onPress }) => (
   <TouchableOpacity
@@ -84,13 +111,96 @@ const ProfileStackScreen = () => {
       <ProfileStack.Screen name="About" component={About} />
       <ProfileStack.Screen name="Legal" component={Legal} />
 
+      <ProfileStack.Screen name="MyAppointments" component={MyAppointments} />
       <ProfileStack.Screen name="NewAppointment" component={NewAppointment} />
       <ProfileStack.Screen name="AppointmentDetails" component={AppointmentDetails} />
       <ProfileStack.Screen name="ReminderSettings" component={ReminderSettings} />
+      
+      <ProfileStack.Screen name="MyReviews" component={MyReviews} />
+      <ProfileStack.Screen name="FavoritePlaces" component={FavoritePlaces} />
 
+      <ProfileStack.Screen name="AddNewAddress" component={AddNewAddress} />
+      <ProfileStack.Screen name="PrivacyPolicy" component={PrivacyPolicy} />
+      <ProfileStack.Screen name="TermsOfService" component={TermsOfService} />
+      <ProfileStack.Screen name="Licenses" component={Licenses} />
+      <ProfileStack.Screen name="KVKKCompliance" component={KVKKCompliance} />
+      <ProfileStack.Screen name="CookiePolicy" component={CookiePolicy} />
+
+      <ProfileStack.Screen 
+        name="FAQ" 
+        component={FAQ}
+        options={{ headerShown: false }}
+      />
+      <ProfileStack.Screen 
+        name="UserGuide" 
+        component={UserGuide}
+        options={{ headerShown: false }}
+      />
+      <ProfileStack.Screen 
+        name="VideoGuides" 
+        component={VideoGuides}
+        options={{ headerShown: false }}
+      />
+      <ProfileStack.Screen 
+        name="BusinessDetail" 
+        component={BusinessDetail}
+        options={{ headerShown: false }}
+      />
     </ProfileStack.Navigator>
   );
 };
+
+function HomeStackScreen() {
+  return (
+    <HomeStack.Navigator>
+      <HomeStack.Screen 
+        name="HomeScreen" 
+        component={HomeScreen}
+        options={{ headerShown: false }}
+      />
+      <HomeStack.Screen 
+        name="CategoryDetail" 
+        component={CategoryDetail}
+        options={{ headerShown: false }}
+      />
+      <HomeStack.Screen 
+        name="FeaturedBusinesses" 
+        component={FeaturedBusinesses}
+        options={{ headerShown: false }}
+      />
+      <HomeStack.Screen 
+        name="PopularBusinesses" 
+        component={PopularBusinesses}
+        options={{ headerShown: false }}
+      />
+      <HomeStack.Screen 
+        name="BusinessDetail" 
+        component={BusinessDetail}
+        options={{ headerShown: false }}
+      />
+      <HomeStack.Screen 
+        name="BookAppointment" 
+        component={BookAppointment}
+        options={{ headerShown: false }}
+      />
+      <HomeStack.Screen 
+        name="MyAppointments" 
+        component={MyAppointments}
+        options={{ headerShown: false }}
+      />
+      <HomeStack.Screen 
+        name="AppointmentDetails" 
+        component={AppointmentDetails}
+        options={{ headerShown: false }}
+      />
+      <HomeStack.Screen 
+        name="ProfileNotificationScreen" 
+        component={ProfileNotificationScreen}
+        options={{ headerShown: false }}
+      />
+    </HomeStack.Navigator>
+  );
+}
 
 const BottomTabNavigator = () => {
   return (
@@ -116,10 +226,10 @@ const BottomTabNavigator = () => {
           headerShown: false,
         }}
       >
-        <Tab.Screen
-          name="Anasayfa"
-          component={HomeScreen}
-          options={{
+        <Tab.Screen 
+          name="Home" 
+          component={HomeStackScreen}
+          options={{ 
             tabBarIcon: ({ color, size }) => (
               <Icon name="home-outline" color={color} size={size} />
             ),
@@ -174,7 +284,6 @@ const BottomTabNavigator = () => {
             },
           }}
         />
-      
       </Tab.Navigator>
     </>
   );

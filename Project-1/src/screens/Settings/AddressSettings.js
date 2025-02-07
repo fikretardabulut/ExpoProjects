@@ -55,32 +55,32 @@ const AddressItem = ({ type, title, address, isDefault, onPress, onSetDefault, o
 
 const AddressSettings = () => {
   const navigation = useNavigation();
-  const [addresses] = useState([
+  const [addresses, setAddresses] = useState([
     {
       id: '1',
       type: 'home',
       title: 'Ev',
-      address: 'Cumhuriyet Mahallesi, Şehit Pilot Caddesi No:12/3, Melikgazi, Kayseri',
+      address: 'Alpaslan Mah. 1234 Sok. No:5/3 Melikgazi, Kayseri',
       isDefault: true,
     },
     {
       id: '2',
       type: 'work',
       title: 'İş',
-      address: 'Mimar Sinan Mahallesi, İnönü Bulvarı No:45, Kocasinan, Kayseri',
+      address: 'Cumhuriyet Mah. 567 Sok. No:12 Kocasinan, Kayseri',
       isDefault: false,
     },
     {
       id: '3',
       type: 'other',
-      title: 'Spor Salonu',
-      address: 'Alparslan Mahallesi, Bahar Caddesi No:78, Melikgazi, Kayseri',
+      title: 'Yazlık',
+      address: 'Sahil Mah. 890 Sok. No:15 Bodrum, Muğla',
       isDefault: false,
     },
   ]);
 
   const handleAddAddress = () => {
-    navigation.navigate('AddAddress');
+    navigation.navigate('AddNewAddress');
   };
 
   const handleEditAddress = (address) => {
@@ -88,7 +88,30 @@ const AddressSettings = () => {
   };
 
   const handleSetDefault = (addressId) => {
-    // Varsayılan adres ayarlama işlemi
+    setAddresses(prevAddresses => {
+      // Önce tüm adreslerin varsayılan durumunu false yap
+      const updatedAddresses = prevAddresses.map(address => ({
+        ...address,
+        isDefault: false
+      }));
+
+      // Seçilen adresi varsayılan olarak ayarla
+      const newAddresses = updatedAddresses.map(address => 
+        address.id === addressId ? { ...address, isDefault: true } : address
+      );
+
+      // AsyncStorage'a kaydet (gerçek uygulamada)
+      // AsyncStorage.setItem('userAddresses', JSON.stringify(newAddresses));
+
+      return newAddresses;
+    });
+
+    // Kullanıcıya bildirim göster
+    Alert.alert(
+      'Başarılı',
+      'Varsayılan adres güncellendi',
+      [{ text: 'Tamam' }]
+    );
   };
 
   const handleDeleteAddress = (addressId) => {

@@ -55,7 +55,7 @@ const SettingsScreen = () => {
         contentContainerStyle={styles.scrollViewContent}
       >
         {/* Profile Section */}
-        <TouchableOpacity style={styles.profileSection} onPress={() => navigation.navigate('EditProfile')}>
+        <TouchableOpacity style={styles.profileSection} onPress={() => navigation.navigate('EditProfileScreen')}>
           <Image
             source={{ uri: 'https://images.catenasoft.com/public/uploads/medium/b0/54/9cd726073a42a0704d6feee18aee.jpg' }}
             style={styles.profileImage}

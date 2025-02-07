@@ -78,8 +78,9 @@ const HelpCenter = () => {
   };
 
   const handleContactSupport = () => {
-    Linking.openURL('mailto:destek@smartcity.com');
+    Linking.openURL('mailto:destek@akillisehir.com');
   };
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -109,14 +110,14 @@ const HelpCenter = () => {
             <SupportOption
               icon="email"
               title="E-posta Desteği"
-              description="destek@smartcity.com"
+              description="destek@akillisehir.com"
               onPress={handleContactSupport}
             />
             <SupportOption
               icon="phone"
               title="Telefon Desteği"
-              description="0850 123 45 67"
-              onPress={() => Linking.openURL('tel:08501234567')}
+              description="0551 048 05 56"
+              onPress={() => Linking.openURL('tel:05510480556')}
             />
           </View>
         </View>
@@ -145,7 +146,7 @@ const HelpCenter = () => {
               icon="video"
               title="Video Rehberler"
               description="Uygulama kullanım videoları"
-              onPress={() => navigation.navigate('VideoTutorials')}
+              onPress={() => navigation.navigate('VideoGuides')}
             />
             <SupportOption
               icon="book-open-page-variant"
@@ -157,7 +158,7 @@ const HelpCenter = () => {
               icon="frequently-asked-questions"
               title="Tüm SSS"
               description="Tüm sık sorulan sorular"
-              onPress={() => navigation.navigate('AllFAQ')}
+              onPress={() => navigation.navigate('FAQ')}
             />
           </View>
         </View>

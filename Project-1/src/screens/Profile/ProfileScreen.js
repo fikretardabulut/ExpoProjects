@@ -97,7 +97,7 @@ const ProfileScreen = () => {
 
       {/* Menu Items */}
       <View style={styles.menuContainer}>
-        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('MyReservations')}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('MyAppointments')}>
           <View style={[styles.menuIcon, { backgroundColor: '#F8F8F8' }]}>
             <Icon name="calendar-clock" size={24} color="#007AFF" />
           </View>

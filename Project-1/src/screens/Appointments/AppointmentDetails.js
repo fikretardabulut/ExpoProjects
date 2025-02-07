@@ -53,7 +53,11 @@ const AppointmentDetails = () => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.scrollView}>
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={[styles.scrollViewContent, { paddingBottom: 60 }]}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Status Badge */}
         <View style={styles.statusContainer}>
           <View style={styles.statusBadge}>
@@ -184,6 +188,9 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  scrollViewContent: {
+    padding: 16,
   },
   statusContainer: {
     alignItems: 'center',
