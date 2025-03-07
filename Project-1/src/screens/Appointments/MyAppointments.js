@@ -14,13 +14,13 @@ import { useNavigation } from '@react-navigation/native';
 const AppointmentItem = ({ appointment, onPress }) => (
   <TouchableOpacity style={styles.appointmentCard} onPress={onPress}>
     <View style={styles.appointmentHeader}>
-      <View style={styles.doctorInfo}>
-        <View style={styles.doctorIcon}>
-          <Icon name="doctor" size={24} color="#007AFF" />
+      <View style={styles.businessInfo}>
+        <View style={styles.businessIcon}>
+          <Icon name="store" size={24} color="#007AFF" />
         </View>
         <View>
-          <Text style={styles.doctorName}>{appointment.doctorName}</Text>
-          <Text style={styles.specialty}>{appointment.specialty}</Text>
+          <Text style={styles.businessName}>{appointment.businessName}</Text>
+          <Text style={styles.category}>{appointment.category}</Text>
         </View>
       </View>
       <View style={[styles.statusBadge, 
@@ -35,6 +35,10 @@ const AppointmentItem = ({ appointment, onPress }) => (
     </View>
 
     <View style={styles.appointmentDetails}>
+      <View style={styles.detailItem}>
+        <Icon name="tag" size={20} color="#666" />
+        <Text style={styles.detailText}>{appointment.service}</Text>
+      </View>
       <View style={styles.detailItem}>
         <Icon name="calendar" size={20} color="#666" />
         <Text style={styles.detailText}>{appointment.date}</Text>
@@ -56,30 +60,33 @@ const MyAppointments = () => {
   const [appointments] = useState([
     {
       id: '1',
-      doctorName: 'Dr. Ahmet Yılmaz',
-      specialty: 'Diş Hekimi',
+      businessName: 'Güzellik Salonu A',
+      category: 'Güzellik & Bakım',
+      service: 'Saç Bakımı',
       status: 'Onaylandı',
       date: '15 Mart 2024',
       time: '14:30',
-      location: 'Özel Dentist Ağız ve Diş Sağlığı Kliniği'
+      location: 'Cumhuriyet Mah. Şehit Pilot Cad. No:12/3, Melikgazi, Kayseri'
     },
     {
       id: '2',
-      doctorName: 'Dr. Ayşe Kaya',
-      specialty: 'Ortodonti Uzmanı',
+      businessName: 'Spor Salonu B',
+      category: 'Spor & Fitness',
+      service: 'Personal Training',
       status: 'Bekliyor',
       date: '20 Mart 2024',
       time: '11:00',
-      location: 'Kayseri Diş Hastanesi'
+      location: 'Alpaslan Mah. Bahar Cad. No:45, Melikgazi, Kayseri'
     },
     {
       id: '3',
-      doctorName: 'Dr. Mehmet Demir',
-      specialty: 'Diş Hekimi',
+      businessName: 'Kafe C',
+      category: 'Yeme & İçme',
+      service: 'Özel Etkinlik',
       status: 'İptal Edildi',
       date: '10 Mart 2024',
       time: '09:30',
-      location: 'Özel Dent Kliniği'
+      location: 'Hunat Mah. İnönü Cad. No:78, Melikgazi, Kayseri'
     },
   ]);
 
@@ -118,14 +125,6 @@ const MyAppointments = () => {
             onPress={() => handleAppointmentPress(appointment)}
           />
         ))}
-
-        <TouchableOpacity 
-          style={styles.newAppointmentButton}
-          onPress={() => navigation.navigate('NewAppointment')}
-        >
-          <Icon name="plus-circle-outline" size={24} color="#007AFF" />
-          <Text style={styles.newAppointmentText}>Yeni Randevu Al</Text>
-        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -173,7 +172,7 @@ const styles = StyleSheet.create({
   },
   scrollViewContent: {
     padding: 16,
-    paddingBottom: 90,
+    paddingBottom: 50,
   },
   appointmentCard: {
     backgroundColor: '#FFF',
@@ -198,11 +197,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  doctorInfo: {
+  businessInfo: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  doctorIcon: {
+  businessIcon: {
     width: 44,
     height: 44,
     borderRadius: 22,
@@ -211,13 +210,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 12,
   },
-  doctorName: {
+  businessName: {
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
     marginBottom: 4,
   },
-  specialty: {
+  category: {
     fontSize: 14,
     color: '#666',
   },

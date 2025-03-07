@@ -9,9 +9,11 @@ import {
   Platform,
   Image,
   Switch,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SettingItem = ({ icon, title, subtitle, type = 'arrow', value, onPress, onToggle }) => (
   <TouchableOpacity 
@@ -40,8 +42,23 @@ const SettingItem = ({ icon, title, subtitle, type = 'arrow', value, onPress, on
   </TouchableOpacity>
 );
 
+
+
 const SettingsScreen = () => {
   const navigation = useNavigation();
+
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user', 'userCredentials']);
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Auth' }],
+      });
+    } catch (error) {
+      console.error('Logout Error:', error);
+      Alert.alert('Hata', 'Çıkış yapılırken bir hata oluştu');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -57,7 +74,7 @@ const SettingsScreen = () => {
         {/* Profile Section */}
         <TouchableOpacity style={styles.profileSection} onPress={() => navigation.navigate('EditProfileScreen')}>
           <Image
-            source={{ uri: 'https://images.catenasoft.com/public/uploads/medium/b0/54/9cd726073a42a0704d6feee18aee.jpg' }}
+            source={{ uri: 'https://catenasoft.tr/9cd726073a42a0704d6feee18aee.jpg' }}
             style={styles.profileImage}
           />
           <View style={styles.profileInfo}>
@@ -173,7 +190,7 @@ const SettingsScreen = () => {
           <View style={styles.sectionContent}>
             <TouchableOpacity 
               style={styles.dangerButton}
-              onPress={() => {/* Handle logout */}}
+              onPress={() => handleLogout()}
             >
               <Icon name="logout" size={24} color="#FF3B30" />
               <Text style={styles.dangerButtonText}>Çıkış Yap</Text>

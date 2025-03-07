@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,71 +7,163 @@ import {
   Image,
   ScrollView,
   StyleSheet,
-  SafeAreaView,
-  Platform,
-  Alert
+  ActivityIndicator,
+  Alert,
+  Platform
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { useNavigation } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const EditProfileScreen = () => {
-  const navigation = useNavigation();
-  const [formData, setFormData] = useState({
-    fullName: 'Fikret Arda Bulut',
-    email: 'bilgi@ardabulut.tr',
-    phone: '+90 551 048 0556',
-    location: 'Kayseri, Türkiye',
+const EditProfileScreen = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [userData, setUserData] = useState({
+    full_name: '',
+    email: '',
+    phone: '',
+    location: '',
     bio: 'Akıllı şehir uygulaması kullanıcısı',
-    notificationPreferences: {
-      email: true,
-      push: true,
-      sms: false
-    }
+    avatar: null
   });
 
-  const handleSave = () => {
-    // API call to update profile would go here
-    Alert.alert(
-      "Başarılı",
-      "Profil bilgileriniz güncellendi.",
-      [{ text: "Tamam", onPress: () => navigation.goBack() }]
-    );
+  useEffect(() => {
+    loadUserProfile();
+  }, []);
+
+  const loadUserProfile = async () => {
+    try {
+      setLoading(true);
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Mock user data
+      setUserData({
+        full_name: 'Fikret Arda Bulut',
+        email: 'bilgi@ardabulut.tr',
+        phone: '+90 551 506 0556',
+        location: 'Kayseri',
+        bio: 'Akıllı şehir uygulaması kullanıcısı',
+        avatar: 'https://catenasoft.tr/9cd726073a42a0704d6feee18aee.jpg'
+      });
+    } catch (error) {
+      console.error('Edit Profile - Load Error:', error);
+      Alert.alert('Hata', 'Profil bilgileri yüklenirken bir hata oluştu.');
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const handleImagePick = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert('İzin Gerekli', 'Galeriye erişim izni gereklidir.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        // Resmi optimize et
+        const manipResult = await ImageManipulator.manipulateAsync(
+          result.assets[0].uri,
+          [{ resize: { width: 500, height: 500 } }],
+          { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+        );
+
+        // Update local state with the new image
+        setUserData(prev => ({ ...prev, avatar: manipResult.uri }));
+      }
+    } catch (error) {
+      console.error('Image Upload Error:', error);
+      Alert.alert('Hata', 'Resim yüklenirken bir hata oluştu.');
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      Alert.alert('Başarılı', 'Profil bilgileriniz güncellendi.');
+      navigation.goBack();
+    } catch (error) {
+      console.error('Profile Update Error:', error);
+      Alert.alert('Hata', 'Profil güncellenirken bir hata oluştu.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
+      </View>
+    );
+  }
+
   return (
-    <SafeAreaView style={styles.safeArea}>      
-      {/* Header */}
+    <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <TouchableOpacity 
+          onPress={() => navigation.goBack()} 
+          style={styles.backButton}
+        >
           <Icon name="arrow-left" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Profili Düzenle</Text>
-        <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
-          <Text style={styles.saveButtonText}>Kaydet</Text>
+        <TouchableOpacity 
+          style={styles.headerRight}
+          onPress={handleSave}
+          disabled={saving}
+        >
+          {saving ? (
+            <ActivityIndicator size="small" color="#007AFF" />
+          ) : (
+            <Text style={styles.saveText}>Kaydet</Text>
+          )}
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.container}>
-        {/* Profile Photo Section */}
-        <View style={styles.photoSection}>
-          <Image
-            source={{ uri: 'https://images.catenasoft.com/public/uploads/medium/b0/54/9cd726073a42a0704d6feee18aee.jpg' }}
-            style={styles.profileImage}
-          />
-          <TouchableOpacity style={styles.changePhotoButton}>
-            <Icon name="camera" size={20} color="#FFF" />
-            <Text style={styles.changePhotoText}>Fotoğrafı Değiştir</Text>
-          </TouchableOpacity>
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollViewContent}
+      >
+        <View style={styles.imageSection}>
+          <View style={styles.imageContainer}>
+            <Image
+              source={
+                userData.avatar
+                  ? { uri: userData.avatar }
+                  : require('../../../assets/default-avatar.png')
+              }
+              style={styles.profileImage}
+            />
+            <TouchableOpacity 
+              style={styles.changeImageButton}
+              onPress={handleImagePick}
+            >
+              <Icon name="camera" size={24} color="#FFF" />
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {/* Form Fields */}
-        <View style={styles.formContainer}>
+        <View style={styles.formSection}>
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Ad Soyad</Text>
             <TextInput
               style={styles.input}
-              value={formData.fullName}
-              onChangeText={(text) => setFormData({ ...formData, fullName: text })}
+              value={userData.full_name}
+              onChangeText={(text) => setUserData(prev => ({ ...prev, full_name: text }))}
               placeholder="Ad Soyad"
             />
           </View>
@@ -79,12 +171,9 @@ const EditProfileScreen = () => {
           <View style={styles.inputGroup}>
             <Text style={styles.label}>E-posta</Text>
             <TextInput
-              style={styles.input}
-              value={formData.email}
-              onChangeText={(text) => setFormData({ ...formData, email: text })}
-              placeholder="E-posta"
-              keyboardType="email-address"
-              autoCapitalize="none"
+              style={[styles.input, { opacity: 0.7 }]}
+              value={userData.email}
+              editable={false}
             />
           </View>
 
@@ -92,112 +181,43 @@ const EditProfileScreen = () => {
             <Text style={styles.label}>Telefon</Text>
             <TextInput
               style={styles.input}
-              value={formData.phone}
-              onChangeText={(text) => setFormData({ ...formData, phone: text })}
-              placeholder="Telefon"
+              value={userData.phone}
+              onChangeText={(text) => setUserData(prev => ({ ...prev, phone: text }))}
+              placeholder="Telefon numarası"
               keyboardType="phone-pad"
             />
           </View>
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Konum</Text>
-            <TouchableOpacity style={styles.locationInput}>
-              <TextInput
-                style={[styles.input, { flex: 1 }]}
-                value={formData.location}
-                onChangeText={(text) => setFormData({ ...formData, location: text })}
-                placeholder="Konum"
-              />
-              <Icon name="map-marker" size={24} color="#007AFF" />
-            </TouchableOpacity>
+            <TextInput
+              style={styles.input}
+              value={userData.location}
+              onChangeText={(text) => setUserData(prev => ({ ...prev, location: text }))}
+              placeholder="Şehir, Ülke"
+            />
           </View>
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Hakkımda</Text>
             <TextInput
               style={[styles.input, styles.bioInput]}
-              value={formData.bio}
-              onChangeText={(text) => setFormData({ ...formData, bio: text })}
-              placeholder="Kendinizden bahsedin"
+              value={userData.bio}
+              onChangeText={(text) => setUserData(prev => ({ ...prev, bio: text }))}
+              placeholder="Kendiniz hakkında kısa bir bilgi"
               multiline
-              numberOfLines={4}
             />
-          </View>
-
-          {/* Notification Preferences */}
-          <View style={styles.sectionTitle}>
-            <Text style={styles.sectionTitleText}>Bildirim Tercihleri</Text>
-          </View>
-
-          <View style={styles.notificationPreferences}>
-            <TouchableOpacity
-              style={styles.preferenceItem}
-              onPress={() => setFormData({
-                ...formData,
-                notificationPreferences: {
-                  ...formData.notificationPreferences,
-                  email: !formData.notificationPreferences.email
-                }
-              })}
-            >
-              <Text style={styles.preferenceText}>E-posta Bildirimleri</Text>
-              <Icon
-                name={formData.notificationPreferences.email ? "checkbox-marked" : "checkbox-blank-outline"}
-                size={24}
-                color="#007AFF"
-              />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.preferenceItem}
-              onPress={() => setFormData({
-                ...formData,
-                notificationPreferences: {
-                  ...formData.notificationPreferences,
-                  push: !formData.notificationPreferences.push
-                }
-              })}
-            >
-              <Text style={styles.preferenceText}>Anlık Bildirimler</Text>
-              <Icon
-                name={formData.notificationPreferences.push ? "checkbox-marked" : "checkbox-blank-outline"}
-                size={24}
-                color="#007AFF"
-              />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.preferenceItem, styles.lastPreferenceItem]}
-              onPress={() => setFormData({
-                ...formData,
-                notificationPreferences: {
-                  ...formData.notificationPreferences,
-                  sms: !formData.notificationPreferences.sms
-                }
-              })}
-            >
-              <Text style={styles.preferenceText}>SMS Bildirimleri</Text>
-              <Icon
-                name={formData.notificationPreferences.sms ? "checkbox-marked" : "checkbox-blank-outline"}
-                size={24}
-                color="#007AFF"
-              />
-            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#FFF',
-  },
   container: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: '#FFF',
   },
   header: {
     flexDirection: 'row',
@@ -208,51 +228,78 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     borderBottomWidth: 1,
     borderBottomColor: '#EFEFEF',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   backButton: {
     padding: 8,
+    marginLeft: -8,
+    width: 60,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#333',
+    textAlign: 'center',
+    flex: 1,
   },
-  saveButton: {
-    padding: 8,
+  headerRight: {
+    width: 60,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
   },
-  saveButtonText: {
-    color: '#007AFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  photoSection: {
-    alignItems: 'center',
-    padding: 20,
+  scrollView: {
+    flex: 1,
     backgroundColor: '#FFF',
   },
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+  scrollViewContent: {
+    paddingBottom: 20,
   },
-  changePhotoButton: {
-    flexDirection: 'row',
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
+  },
+  imageSection: {
+    alignItems: 'center',
+    paddingVertical: 20,
+    backgroundColor: '#FFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#EFEFEF',
+  },
+  imageContainer: {
+    position: 'relative',
+  },
+  profileImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+  },
+  changeImageButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
     backgroundColor: '#007AFF',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginTop: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#FFF',
   },
-  changePhotoText: {
-    color: '#FFF',
-    marginLeft: 8,
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  formContainer: {
+  formSection: {
     padding: 16,
-    paddingBottom: Platform.OS === 'ios' ? 100 : 80,
+    backgroundColor: '#FFF',
   },
   inputGroup: {
     marginBottom: 16,
@@ -261,11 +308,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginBottom: 8,
+    fontWeight: '500',
   },
   input: {
-    backgroundColor: '#FFF',
+    backgroundColor: '#F8F9FA',
     borderWidth: 1,
-    borderColor: '#EFEFEF',
+    borderColor: '#E1E1E1',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
@@ -274,44 +322,12 @@ const styles = StyleSheet.create({
   bioInput: {
     height: 100,
     textAlignVertical: 'top',
+    marginBottom: 30,
   },
-  locationInput: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderColor: '#EFEFEF',
-    borderRadius: 8,
-    paddingRight: 12,
-  },
-  sectionTitle: {
-    marginTop: 24,
-    marginBottom: 16,
-  },
-  sectionTitleText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-  },
-  notificationPreferences: {
-    backgroundColor: '#FFF',
-    borderRadius: 8,
-    overflow: 'hidden',
-  },
-  preferenceItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EFEFEF',
-  },
-  lastPreferenceItem: {
-    borderBottomWidth: 0,
-  },
-  preferenceText: {
+  saveText: {
+    color: '#007AFF',
     fontSize: 16,
-    color: '#333',
+    fontWeight: '600',
   },
 });
 

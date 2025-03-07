@@ -38,7 +38,7 @@ const ProfileDetails = () => {
   const [profileData] = useState({
     fullName: 'Fikret Arda Bulut',
     email: 'bilgi@ardabulut.tr',
-    phone: '+90 551 048 0556',
+    phone: '+90 551 506 0556',
     birthDate: '04.02.2006',
     gender: 'Erkek',
     occupation: 'Yazılım Geliştirici',
@@ -83,7 +83,7 @@ const ProfileDetails = () => {
         <View style={styles.photoSection}>
           <View style={styles.photoContainer}>
             <Image
-              source={{ uri: 'https://images.catenasoft.com/public/uploads/medium/b0/54/9cd726073a42a0704d6feee18aee.jpg' }}
+              source={{ uri: 'https://catenasoft.tr/9cd726073a42a0704d6feee18aee.jpg' }}
               style={styles.profilePhoto}
             />
             <TouchableOpacity 

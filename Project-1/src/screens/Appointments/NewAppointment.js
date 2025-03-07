@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   Platform,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
@@ -30,20 +31,35 @@ const SelectField = ({ icon, title, value, placeholder, onPress }) => (
 const NewAppointment = () => {
   const navigation = useNavigation();
   const [appointmentData, setAppointmentData] = useState({
-    specialty: '',
-    doctor: '',
+    category: '',
+    business: '',
+    service: '',
     date: '',
     time: '',
-    location: '',
     notes: '',
   });
+  const [saving, setSaving] = useState(false);
 
-  const handleSelectSpecialty = () => {
-    // Uzmanlık alanı seçim modalı
+  const isFormValid = useMemo(() => {
+    return (
+      appointmentData.category.trim() !== '' &&
+      appointmentData.business.trim() !== '' &&
+      appointmentData.service.trim() !== '' &&
+      appointmentData.date.trim() !== '' &&
+      appointmentData.time.trim() !== ''
+    );
+  }, [appointmentData]);
+
+  const handleSelectCategory = () => {
+    // İşletme kategorisi seçim modalı
   };
 
-  const handleSelectDoctor = () => {
-    // Doktor seçim modalı
+  const handleSelectBusiness = () => {
+    // İşletme seçim modalı
+  };
+
+  const handleSelectService = () => {
+    // Hizmet seçim modalı
   };
 
   const handleSelectDate = () => {
@@ -54,13 +70,17 @@ const NewAppointment = () => {
     // Saat seçim modalı
   };
 
-  const handleSelectLocation = () => {
-    // Konum seçim modalı
-  };
-
-  const handleCreateAppointment = () => {
-    // Randevu oluştur
-    navigation.goBack();
+  const handleCreateAppointment = async () => {
+    setSaving(true);
+    try {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      navigation.goBack();
+    } catch (e) {
+      console.error('Randevu oluşturulurken hata oluştu:', e);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -74,7 +94,20 @@ const NewAppointment = () => {
           <Icon name="arrow-left" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Yeni Randevu</Text>
-        <View style={styles.headerRight} />
+        <View style={styles.headerRight}>
+          {isFormValid ? (
+            <TouchableOpacity 
+              onPress={handleCreateAppointment}
+              disabled={saving}
+            >
+              {saving ? (
+                <ActivityIndicator size="small" color="#007AFF" />
+              ) : (
+                <Text style={styles.saveText}>Kaydet</Text>
+              )}
+            </TouchableOpacity>
+          ) : null}
+        </View>
       </View>
 
       <ScrollView style={styles.scrollView}>
@@ -82,12 +115,12 @@ const NewAppointment = () => {
         <View style={styles.progressContainer}>
           <View style={styles.progressStep}>
             <View style={[styles.stepDot, styles.activeStep]} />
-            <Text style={[styles.stepText, styles.activeStepText]}>Uzmanlık</Text>
+            <Text style={[styles.stepText, styles.activeStepText]}>Kategori</Text>
           </View>
-          <View style={[styles.progressLine, appointmentData.specialty ? styles.activeLine : null]} />
+          <View style={[styles.progressLine, appointmentData.category ? styles.activeLine : null]} />
           <View style={styles.progressStep}>
-            <View style={[styles.stepDot, appointmentData.doctor ? styles.activeStep : null]} />
-            <Text style={[styles.stepText, appointmentData.doctor ? styles.activeStepText : null]}>Doktor</Text>
+            <View style={[styles.stepDot, appointmentData.business ? styles.activeStep : null]} />
+            <Text style={[styles.stepText, appointmentData.business ? styles.activeStepText : null]}>İşletme</Text>
           </View>
           <View style={[styles.progressLine, appointmentData.date ? styles.activeLine : null]} />
           <View style={styles.progressStep}>
@@ -99,18 +132,25 @@ const NewAppointment = () => {
         {/* Form Fields */}
         <View style={styles.formContainer}>
           <SelectField
-            icon="doctor"
-            title="Uzmanlık Alanı"
-            value={appointmentData.specialty}
-            placeholder="Uzmanlık alanı seçin"
-            onPress={handleSelectSpecialty}
+            icon="shape"
+            title="Kategori"
+            value={appointmentData.category}
+            placeholder="İşletme kategorisi seçin"
+            onPress={handleSelectCategory}
           />
           <SelectField
-            icon="account"
-            title="Doktor"
-            value={appointmentData.doctor}
-            placeholder="Doktor seçin"
-            onPress={handleSelectDoctor}
+            icon="store"
+            title="İşletme"
+            value={appointmentData.business}
+            placeholder="İşletme seçin"
+            onPress={handleSelectBusiness}
+          />
+          <SelectField
+            icon="tag"
+            title="Hizmet"
+            value={appointmentData.service}
+            placeholder="Hizmet seçin"
+            onPress={handleSelectService}
           />
           <SelectField
             icon="calendar"
@@ -125,13 +165,6 @@ const NewAppointment = () => {
             value={appointmentData.time}
             placeholder="Saat seçin"
             onPress={handleSelectTime}
-          />
-          <SelectField
-            icon="map-marker"
-            title="Konum"
-            value={appointmentData.location}
-            placeholder="Klinik seçin"
-            onPress={handleSelectLocation}
           />
 
           {/* Notes */}
@@ -148,17 +181,6 @@ const NewAppointment = () => {
           </View>
         </View>
       </ScrollView>
-
-      {/* Create Button */}
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity 
-          style={styles.createButton}
-          onPress={handleCreateAppointment}
-        >
-          <Icon name="check" size={20} color="#FFF" />
-          <Text style={styles.createButtonText}>Randevu Oluştur</Text>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 };
@@ -191,14 +213,25 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: 8,
+    marginLeft: -8,
+    width: 60,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#333',
+    textAlign: 'center',
+    flex: 1,
   },
   headerRight: {
-    width: 40,
+    width: 60,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  saveText: {
+    color: '#007AFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
   scrollView: {
     flex: 1,
@@ -304,26 +337,6 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
     fontSize: 16,
     color: '#333',
-  },
-  buttonContainer: {
-    padding: 16,
-    backgroundColor: '#FFF',
-    borderTopWidth: 1,
-    borderTopColor: '#EFEFEF',
-  },
-  createButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#007AFF',
-    padding: 16,
-    borderRadius: 12,
-  },
-  createButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFF',
-    marginLeft: 8,
   },
 });
 

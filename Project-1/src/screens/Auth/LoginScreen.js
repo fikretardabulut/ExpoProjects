@@ -2,67 +2,43 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   TextInput,
   TouchableOpacity,
-  SafeAreaView,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
-  Alert,
-  ActivityIndicator,
+  Image,
+  SafeAreaView,
+  StatusBar,
+  Dimensions
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-const LoginScreen = () => {
-  const navigation = useNavigation();
-  const [username, setUsername] = useState('');
+const { width } = Dimensions.get('window');
+
+const LoginScreen = ({ navigation }) => {
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [secureTextEntry, setSecureTextEntry] = useState(true);
+  const [focusedInput, setFocusedInput] = useState(null);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleLogin = async () => {
-    if (!username || !password) {
-      Alert.alert('Uyarı', 'Lütfen tüm alanları doldurun');
+    if (!email || !password) {
+      Alert.alert('Hata', 'Lütfen tüm alanları doldurun');
       return;
     }
 
-    setLoading(true);
-
     try {
-      // API isteği burada yapılacak
-      // Örnek başarılı yanıt:
-      const response = {
-        success: true,
-        data: {
-          token: 'sample_token',
-          role: 1, // 1: Kullanıcı, 2: İşletme/Tesis, 0: Administrator
-          user: {
-            id: 1,
-            username: username,
-            // diğer kullanıcı bilgileri
-          }
-        }
-      };
-
-      if (response.success) {
-        // Token ve kullanıcı rolünü kaydet
-        await AsyncStorage.setItem('userToken', response.data.token);
-        await AsyncStorage.setItem('userRole', response.data.role.toString());
-        await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
-
-        // Ana sayfaya yönlendir
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'MainApp' }],
-        });
-      } else {
-        Alert.alert('Hata', 'Giriş başarısız. Lütfen bilgilerinizi kontrol edin.');
-      }
+      setLoading(true);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      navigation.replace('MainApp');
     } catch (error) {
-      Alert.alert('Hata', 'Bir sorun oluştu. Lütfen tekrar deneyin.');
+      Alert.alert('Hata', 'Giriş yapılırken bir hata oluştu');
     } finally {
       setLoading(false);
     }
@@ -70,63 +46,93 @@ const LoginScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
+      <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
+      <KeyboardAvoidingView 
+        style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
       >
-        <ScrollView contentContainerStyle={styles.scrollView}>
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity
-              onPress={() => navigation.goBack()}
-              style={styles.backButton}
-            >
-              <Icon name="arrow-left" size={24} color="#333" />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Giriş Yap</Text>
-            <View style={styles.headerRight} />
+        <View style={styles.content}>
+          <View style={styles.headerContainer}>
+            <Image
+              source={require('../../assets/logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+            <Text style={styles.welcomeText}>Tekrar Hoş Geldiniz!</Text>
+            <Text style={styles.subtitleText}>
+              Hesabınıza giriş yaparak devam edin
+            </Text>
           </View>
 
-          {/* Form */}
           <View style={styles.form}>
-            <View style={styles.inputContainer}>
-              <Icon name="account" size={20} color="#666" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Kullanıcı Adı"
-                value={username}
-                onChangeText={setUsername}
-                autoCapitalize="none"
-              />
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>E-posta</Text>
+              <View style={[
+                styles.inputWrapper,
+                focusedInput === 'email' && styles.inputWrapperFocused
+              ]}>
+                <Icon name="email-outline" size={20} color={focusedInput === 'email' ? '#007AFF' : '#666'} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="E-posta adresinizi girin"
+                  placeholderTextColor="#999"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  editable={!loading}
+                  onFocus={() => setFocusedInput('email')}
+                  onBlur={() => setFocusedInput(null)}
+                />
+              </View>
             </View>
 
-            <View style={styles.inputContainer}>
-              <Icon name="lock" size={20} color="#666" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Şifre"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-              />
-              <TouchableOpacity
-                onPress={() => setShowPassword(!showPassword)}
-                style={styles.showPasswordButton}
-              >
-                <Icon
-                  name={showPassword ? "eye-off" : "eye"}
-                  size={20}
-                  color="#666"
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Şifre</Text>
+              <View style={[
+                styles.inputWrapper,
+                focusedInput === 'password' && styles.inputWrapperFocused
+              ]}>
+                <Icon name="lock-outline" size={20} color={focusedInput === 'password' ? '#007AFF' : '#666'} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Şifrenizi girin"
+                  placeholderTextColor="#999"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={secureTextEntry}
+                  editable={!loading}
+                  onFocus={() => setFocusedInput('password')}
+                  onBlur={() => setFocusedInput(null)}
                 />
+                <TouchableOpacity
+                  style={styles.eyeIcon}
+                  onPress={() => setSecureTextEntry(!secureTextEntry)}
+                >
+                  <Icon
+                    name={secureTextEntry ? "eye-off-outline" : "eye-outline"}
+                    size={20}
+                    color="#666"
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={styles.rememberForgotContainer}>
+              <TouchableOpacity 
+                style={styles.rememberMeContainer}
+                onPress={() => setRememberMe(!rememberMe)}
+              >
+                <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
+                  {rememberMe && <Icon name="check" size={14} color="#FFF" />}
+                </View>
+                <Text style={styles.rememberMeText}>Beni Hatırla</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.forgotPassword}>
+                <Text style={styles.forgotPasswordText}>Şifremi Unuttum</Text>
               </TouchableOpacity>
             </View>
-
-            <TouchableOpacity
-              style={styles.forgotPassword}
-              onPress={() => navigation.navigate('ForgotPassword')}
-            >
-              <Text style={styles.forgotPasswordText}>Şifremi Unuttum</Text>
-            </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.loginButton, loading && styles.loginButtonDisabled]}
@@ -137,21 +143,23 @@ const LoginScreen = () => {
                 <ActivityIndicator color="#FFF" />
               ) : (
                 <>
-                  <Icon name="login" size={20} color="#FFF" />
                   <Text style={styles.loginButtonText}>Giriş Yap</Text>
+                  <Icon name="arrow-right" size={20} color="#FFF" />
                 </>
               )}
             </TouchableOpacity>
-          </View>
 
-          {/* Footer */}
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>Hesabınız yok mu?</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-              <Text style={styles.footerLink}>Kayıt Ol</Text>
+            <TouchableOpacity
+              style={styles.registerButton}
+              onPress={() => navigation.navigate('Register')}
+              disabled={loading}
+            >
+              <Text style={styles.registerButtonText}>
+                Hesabınız yok mu? <Text style={styles.registerButtonTextBold}>Kayıt Ol</Text>
+              </Text>
             </TouchableOpacity>
           </View>
-        </ScrollView>
+        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -162,72 +170,132 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFF',
   },
-  keyboardView: {
+  content: {
     flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 24,
   },
-  scrollView: {
-    flexGrow: 1,
-  },
-  header: {
-    flexDirection: 'row',
+  headerContainer: {
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EFEFEF',
+    marginBottom: 40,
   },
-  backButton: {
-    padding: 8,
+  logo: {
+    width: width * 0.4,
+    height: width * 0.4,
+    marginBottom: 24,
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
+  welcomeText: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1A1A1A',
+    marginBottom: 8,
+    textAlign: 'center',
   },
-  headerRight: {
-    width: 40,
+  subtitleText: {
+    fontSize: 15,
+    color: '#666',
+    textAlign: 'center',
   },
   form: {
-    flex: 1,
-    padding: 20,
-    justifyContent: 'center',
+    width: '100%',
   },
-  inputContainer: {
+  inputGroup: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: 8,
+    marginLeft: 4,
+  },
+  inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8F8F8',
+    backgroundColor: '#F8F9FA',
     borderRadius: 12,
-    marginBottom: 16,
-    paddingHorizontal: 12,
+    borderWidth: 1.5,
+    borderColor: '#E9ECEF',
+    paddingHorizontal: 16,
+    height: 56,
+    transition: 'all 0.3s',
+  },
+  inputWrapperFocused: {
+    borderColor: '#007AFF',
+    backgroundColor: '#FFF',
+    shadowColor: '#007AFF',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   inputIcon: {
-    marginRight: 10,
+    marginRight: 12,
   },
   input: {
     flex: 1,
-    height: 48,
     fontSize: 16,
-    color: '#333',
+    color: '#1A1A1A',
   },
-  showPasswordButton: {
+  eyeIcon: {
     padding: 8,
   },
-  forgotPassword: {
-    alignSelf: 'flex-end',
+  rememberForgotContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 24,
+  },
+  rememberMeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: '#E9ECEF',
+    backgroundColor: '#F8F9FA',
+    marginRight: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: '#007AFF',
+    borderColor: '#007AFF',
+  },
+  rememberMeText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  forgotPassword: {
+    alignSelf: 'center',
   },
   forgotPasswordText: {
     color: '#007AFF',
     fontSize: 14,
+    fontWeight: '600',
   },
   loginButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
     backgroundColor: '#007AFF',
-    padding: 16,
+    height: 56,
     borderRadius: 12,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+    shadowColor: '#007AFF',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
     gap: 8,
   },
   loginButtonDisabled: {
@@ -238,21 +306,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+  registerButton: {
     alignItems: 'center',
-    padding: 20,
-    gap: 4,
+    padding: 16,
   },
-  footerText: {
+  registerButtonText: {
     color: '#666',
-    fontSize: 14,
+    fontSize: 15,
   },
-  footerLink: {
+  registerButtonTextBold: {
     color: '#007AFF',
-    fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
   },
 });
 

@@ -89,15 +89,15 @@ const KVKKCompliance = () => {
             <View style={styles.contactInfo}>
               <View style={styles.contactItem}>
                 <Icon name="email" size={20} color="#007AFF" />
-                <Text style={styles.contactText}>kvkk@example.com</Text>
+                <Text style={styles.contactText}>kvkk@catenasoft.tr</Text>
               </View>
               <View style={styles.contactItem}>
                 <Icon name="map-marker" size={20} color="#007AFF" />
-                <Text style={styles.contactText}>[Şirket Adresi]</Text>
+                <Text style={styles.contactText}>Melikgazi/Kayseri</Text>
               </View>
               <View style={styles.contactItem}>
                 <Icon name="phone" size={20} color="#007AFF" />
-                <Text style={styles.contactText}>+90 xxx xxx xx xx</Text>
+                <Text style={styles.contactText}>+90 551 506 05 56</Text>
               </View>
             </View>
           </View>
@@ -108,7 +108,7 @@ const KVKKCompliance = () => {
           </TouchableOpacity>
 
           <Text style={styles.lastUpdate}>
-            Son güncelleme: 1 Mart 2024
+            Son güncelleme:  05.03.2025
           </Text>
         </View>
       </ScrollView>

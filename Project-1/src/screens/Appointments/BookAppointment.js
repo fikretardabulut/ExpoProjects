@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,206 +7,245 @@ import {
   ScrollView,
   SafeAreaView,
   Platform,
-  Alert,
-  Image,
+  StatusBar,
+  Animated,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
-const ServiceSummary = ({ service }) => (
-  <View style={styles.serviceSummary}>
-    <View style={styles.serviceIconContainer}>
-      <Icon name="spa" size={24} color="#007AFF" />
-    </View>
-    <View style={styles.serviceDetails}>
-      <Text style={styles.serviceTitle}>{service.title}</Text>
-      <View style={styles.serviceMetaInfo}>
-        <View style={styles.metaItem}>
-          <Icon name="clock-outline" size={16} color="#666" />
-          <Text style={styles.metaText}>{service.duration} dk</Text>
-        </View>
-        <View style={styles.metaItem}>
-          <Icon name="currency-try" size={16} color="#666" />
-          <Text style={styles.metaText}>{service.price} TL</Text>
-        </View>
-      </View>
-    </View>
-  </View>
-);
+const TimeSlot = ({ time, isSelected, isAvailable, onPress }) => {
+  const scale = new Animated.Value(1);
 
-const TimeSlot = ({ time, isAvailable, isSelected, onSelect }) => (
-  <TouchableOpacity
-    style={[
-      styles.timeSlot,
-      !isAvailable && styles.timeSlotUnavailable,
-      isSelected && styles.timeSlotSelected,
-    ]}
-    onPress={onSelect}
-    disabled={!isAvailable}
-  >
-    <Text
-      style={[
-        styles.timeSlotText,
-        !isAvailable && styles.timeSlotTextUnavailable,
-        isSelected && styles.timeSlotTextSelected,
-      ]}
-    >
-      {time}
-    </Text>
-    {isAvailable && !isSelected && (
-      <Text style={styles.availableText}>Müsait</Text>
-    )}
-    {!isAvailable && (
-      <Text style={styles.unavailableText}>Dolu</Text>
-    )}
-  </TouchableOpacity>
-);
+  const onPressIn = () => {
+    Animated.spring(scale, {
+      toValue: 0.95,
+      useNativeDriver: true,
+    }).start();
+  };
 
-const DateButton = ({ date, isSelected, onSelect, isAvailable }) => {
-  const dayNames = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
-  const monthNames = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
-  const dateObj = new Date(date);
-  const dayName = dayNames[dateObj.getDay()];
-  const dayNumber = dateObj.getDate();
-  const month = monthNames[dateObj.getMonth()];
+  const onPressOut = () => {
+    Animated.spring(scale, {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
+  };
 
   return (
-    <TouchableOpacity
-      style={[
-        styles.dateButton,
-        isSelected && styles.dateButtonSelected,
-        !isAvailable && styles.dateButtonUnavailable,
-      ]}
-      onPress={onSelect}
-      disabled={!isAvailable}
-    >
-      <Text style={[styles.dateDay, isSelected && styles.dateTextSelected]}>
-        {dayName}
-      </Text>
-      <Text style={[styles.dateNumber, isSelected && styles.dateTextSelected]}>
-        {dayNumber}
-      </Text>
-      <Text style={[styles.dateMonth, isSelected && styles.dateTextSelected]}>
-        {month}
-      </Text>
-    </TouchableOpacity>
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <TouchableOpacity
+        style={[
+          styles.timeSlot,
+          isSelected && styles.timeSlotSelected,
+          !isAvailable && styles.timeSlotUnavailable,
+        ]}
+        onPress={onPress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        disabled={!isAvailable}
+        activeOpacity={0.8}
+      >
+        <Text
+          style={[
+            styles.timeSlotText,
+            isSelected && styles.timeSlotTextSelected,
+            !isAvailable && styles.timeSlotTextUnavailable,
+          ]}
+        >
+          {time}
+        </Text>
+        {isAvailable && !isSelected && (
+          <View style={styles.availableIndicator} />
+        )}
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
+
+const DateCard = ({ date, day, isSelected, isAvailable, onPress }) => {
+  const scale = new Animated.Value(1);
+
+  const onPressIn = () => {
+    Animated.spring(scale, {
+      toValue: 0.95,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const onPressOut = () => {
+    Animated.spring(scale, {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  return (
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <TouchableOpacity
+        style={[
+          styles.dateCard,
+          isSelected && styles.dateCardSelected,
+          !isAvailable && styles.dateCardUnavailable,
+        ]}
+        onPress={onPress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        disabled={!isAvailable}
+        activeOpacity={0.8}
+      >
+        <Text style={[
+          styles.dateDay,
+          isSelected && styles.dateTextSelected,
+          !isAvailable && styles.dateTextUnavailable,
+        ]}>
+          {day}
+        </Text>
+        <Text style={[
+          styles.dateText,
+          isSelected && styles.dateTextSelected,
+          !isAvailable && styles.dateTextUnavailable,
+        ]}>
+          {date}
+        </Text>
+        {isAvailable && !isSelected && (
+          <View style={styles.availableDateIndicator} />
+        )}
+      </TouchableOpacity>
+    </Animated.View>
   );
 };
 
 const BookAppointment = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { businessId, serviceId, businessData, selectedService } = route.params || {};
-
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
 
-  // İşletmenin çalışma günleri (0: Pazar, 6: Cumartesi)
-  const workingDays = [1, 2, 3, 4, 5]; // Pazartesi-Cuma
+  const {
+    businessId,
+    businessName,
+    serviceId,
+    serviceName,
+    servicePrice,
+    serviceDuration,
+    businessIsOpen,
+    businessCategory
+  } = route.params;
 
-  // Sonraki 14 günü hesapla
-  const nextTwoWeeks = Array.from({ length: 14 }, (_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() + i);
-    return {
-      date: date.toISOString().split('T')[0],
-      isAvailable: workingDays.includes(date.getDay())
-    };
-  });
-
-  // Sayfa açıldığında ilk müsait günü seç
-  useEffect(() => {
-    const firstAvailableDate = nextTwoWeeks.find(day => day.isAvailable);
-    if (firstAvailableDate) {
-      setSelectedDate(firstAvailableDate.date);
-    }
-  }, []);
-
-  // Eğer gerekli veriler yoksa ana sayfaya yönlendir
-  useEffect(() => {
-    if (!businessId || !serviceId || !selectedService) {
-      Alert.alert(
-        'Hata',
-        'Randevu bilgileri eksik. Lütfen tekrar deneyin.',
-        [
-          {
-            text: 'Tamam',
-            onPress: () => navigation.goBack()
-          }
-        ]
-      );
-    }
-  }, [businessId, serviceId, selectedService]);
-
-  const timeSlots = [
-    { time: '09:00', available: true },
-    { time: '09:30', available: true },
-    { time: '10:00', available: false },
-    { time: '10:30', available: true },
-    { time: '11:00', available: true },
-    { time: '11:30', available: false },
-    { time: '12:00', available: true },
-    { time: '14:00', available: true },
-    { time: '14:30', available: true },
-    { time: '15:00', available: true },
-    { time: '15:30', available: false },
-    { time: '16:00', available: true },
-    { time: '16:30', available: true },
-    { time: '17:00', available: true },
+  // Örnek tarihler - gerçek uygulamada API'den gelecek
+  const availableDates = [
+    { date: '25 Mart', day: 'Pzt', available: true },
+    { date: '26 Mart', day: 'Sal', available: true },
+    { date: '27 Mart', day: 'Çar', available: true },
+    { date: '28 Mart', day: 'Per', available: true },
+    { date: '29 Mart', day: 'Cum', available: false },
+    { date: '30 Mart', day: 'Cmt', available: true },
+    { date: '31 Mart', day: 'Paz', available: true },
   ];
 
-  const handleConfirmAppointment = () => {
-    if (!selectedDate || !selectedTime) {
-      Alert.alert('Hata', 'Lütfen tarih ve saat seçin.');
-      return;
-    }
+  // Örnek saatler - gerçek uygulamada API'den gelecek
+  const timeSlots = [
+    { time: '09:00', available: true },
+    { time: '10:00', available: true },
+    { time: '11:00', available: false },
+    { time: '12:00', available: true },
+    { time: '13:00', available: false },
+    { time: '14:00', available: true },
+    { time: '15:00', available: true },
+    { time: '16:00', available: true },
+    { time: '17:00', available: true },
+    { time: '18:00', available: false },
+  ];
 
-    // Burada API'ye randevu kaydı yapılacak
-    Alert.alert(
-      'Başarılı',
-      'Randevunuz başarıyla oluşturuldu.',
-      [
-        {
-          text: 'Tamam',
-          onPress: () => navigation.navigate('MyAppointments')
-        }
-      ]
-    );
+  const handleConfirmBooking = () => {
+    navigation.navigate('BookingConfirmation', {
+      businessName,
+      serviceName,
+      servicePrice,
+      date: selectedDate,
+      time: selectedTime,
+    });
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
+      
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
+        <TouchableOpacity 
+          onPress={() => navigation.goBack()} 
           style={styles.backButton}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Icon name="arrow-left" size={24} color="#333" />
+          <Icon name="chevron-left" size={28} color="#1A1A1A" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Randevu Al</Text>
         <View style={styles.headerRight} />
       </View>
 
-      <ScrollView style={styles.scrollView}>
-        {/* Service Summary */}
-        {selectedService && <ServiceSummary service={selectedService} />}
+      <ScrollView 
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 140 }}
+        bounces={true}
+        overScrollMode="always"
+      >
+        {/* Service Info */}
+        <View style={styles.serviceInfo}>
+          <View style={styles.serviceDetails}>
+            <View style={styles.serviceHeader}>
+              <View style={styles.businessInfo}>
+                <Text style={styles.businessName}>{businessName}</Text>
+                {businessIsOpen ? (
+                  <View style={styles.statusBadge}>
+                    <View style={styles.statusDot} />
+                    <Text style={styles.statusText}>Açık</Text>
+                  </View>
+                ) : (
+                  <View style={[styles.statusBadge, styles.statusBadgeClosed]}>
+                    <View style={[styles.statusDot, styles.statusDotClosed]} />
+                    <Text style={[styles.statusText, styles.statusTextClosed]}>Kapalı</Text>
+                  </View>
+                )}
+              </View>
+              <View style={styles.serviceBadge}>
+                <Text style={styles.serviceBadgeText}>{businessCategory}</Text>
+              </View>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.serviceContent}>
+              <Text style={styles.serviceName}>{serviceName}</Text>
+              <View style={styles.serviceMetaInfo}>
+                <View style={styles.metaItem}>
+                  <Icon name="clock-outline" size={16} color="#666" />
+                  <Text style={styles.metaText}>{serviceDuration} dk</Text>
+                </View>
+                <View style={styles.metaItem}>
+                  <Icon name="currency-try" size={16} color="#666" />
+                  <Text style={styles.metaText}>{servicePrice} ₺</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
 
         {/* Date Selection */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Tarih Seçin</Text>
-          <ScrollView
-            horizontal
+          <ScrollView 
+            horizontal 
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.dateList}
+            style={styles.dateList}
+            contentContainerStyle={styles.dateListContent}
           >
-            {nextTwoWeeks.map((day) => (
-              <DateButton
-                key={day.date}
-                date={day.date}
-                isSelected={selectedDate === day.date}
-                isAvailable={day.isAvailable}
-                onSelect={() => setSelectedDate(day.date)}
+            {availableDates.map((item, index) => (
+              <DateCard
+                key={index}
+                date={item.date}
+                day={item.day}
+                isSelected={selectedDate === item.date}
+                isAvailable={item.available}
+                onPress={() => item.available && setSelectedDate(item.date)}
               />
             ))}
           </ScrollView>
@@ -217,67 +256,62 @@ const BookAppointment = () => {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Saat Seçin</Text>
             <View style={styles.timeGrid}>
-              {timeSlots.map((slot) => (
+              {timeSlots.map((slot, index) => (
                 <TimeSlot
-                  key={slot.time}
+                  key={index}
                   time={slot.time}
-                  isAvailable={slot.available}
                   isSelected={selectedTime === slot.time}
-                  onSelect={() => setSelectedTime(slot.time)}
+                  isAvailable={slot.available}
+                  onPress={() => setSelectedTime(slot.time)}
                 />
               ))}
             </View>
           </View>
         )}
 
-        {/* Selected Time Summary */}
-        {selectedDate && selectedTime && (
-          <View style={styles.summary}>
-            <Icon name="calendar-clock" size={24} color="#007AFF" />
-            <View style={styles.summaryContent}>
-              <Text style={styles.summaryTitle}>Seçilen Randevu</Text>
-              <Text style={styles.summaryText}>
-                {new Date(selectedDate).toLocaleDateString('tr-TR', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric'
-                })} - {selectedTime}
-              </Text>
-            </View>
+        {/* Legend */}
+        <View style={styles.legend}>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: '#E8F5E9' }]} />
+            <Text style={styles.legendText}>Müsait</Text>
           </View>
-        )}
-
-        {/* Appointment Rules */}
-        <View style={styles.rulesContainer}>
-          <Text style={styles.rulesTitle}>Önemli Bilgiler</Text>
-          <View style={styles.ruleItem}>
-            <Icon name="information" size={16} color="#666" />
-            <Text style={styles.ruleText}>
-              Randevunuza son 1 saat kalana kadar iptal edebilirsiniz.
-            </Text>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: '#007AFF' }]} />
+            <Text style={styles.legendText}>Seçili</Text>
           </View>
-          <View style={styles.ruleItem}>
-            <Icon name="clock-alert" size={16} color="#666" />
-            <Text style={styles.ruleText}>
-              Lütfen randevu saatinizden 5 dakika önce hazır olunuz.
-            </Text>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: '#F5F5F5' }]} />
+            <Text style={styles.legendText}>Dolu</Text>
           </View>
         </View>
       </ScrollView>
 
-      {/* Confirm Button */}
-      <View style={[styles.bottomButton, { marginBottom: 60 }]}>
-        <TouchableOpacity
-          style={[
-            styles.confirmButton,
-            (!selectedDate || !selectedTime) && styles.confirmButtonDisabled,
-          ]}
-          onPress={handleConfirmAppointment}
-          disabled={!selectedDate || !selectedTime}
-        >
-          <Icon name="check" size={24} color="#FFF" />
-          <Text style={styles.confirmButtonText}>Randevuyu Onayla</Text>
-        </TouchableOpacity>
+      {/* Bottom Button */}
+      <View style={styles.bottomContainer}>
+        {selectedDate && selectedTime ? (
+          <View style={styles.summaryContainer}>
+            <View style={styles.summaryInfo}>
+              <Text style={styles.summaryTitle}>Seçilen Randevu</Text>
+              <Text style={styles.summaryText}>{selectedDate} - {selectedTime}</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.confirmButton}
+              onPress={handleConfirmBooking}
+            >
+              <Text style={styles.confirmButtonText}>Onayla</Text>
+              <Icon name="arrow-right" size={20} color="#FFF" />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={[styles.confirmButton, styles.confirmButtonDisabled]}
+            disabled={true}
+          >
+            <Text style={styles.confirmButtonText}>
+              {!selectedDate ? 'Tarih Seçin' : 'Saat Seçin'}
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -286,83 +320,131 @@ const BookAppointment = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: '#FFF',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    height: 56,
     backgroundColor: '#FFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#EFEFEF',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
+    borderBottomColor: '#F0F0F0',
   },
   backButton: {
-    padding: 8,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '600',
-    color: '#333',
+    color: '#1A1A1A',
+    flex: 1,
+    textAlign: 'center',
   },
   headerRight: {
     width: 40,
   },
   scrollView: {
     flex: 1,
+    marginBottom: 20,
   },
-  serviceSummary: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF',
-    margin: 16,
+  serviceInfo: {
     padding: 16,
-    borderRadius: 12,
+    backgroundColor: '#F8F9FA',
+  },
+  serviceDetails: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    padding: 16,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
       },
       android: {
-        elevation: 2,
+        elevation: 3,
       },
     }),
   },
-  serviceIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#F0F9FF',
-    justifyContent: 'center',
-    alignItems: 'center',
+  serviceHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  businessInfo: {
+    flex: 1,
     marginRight: 12,
   },
-  serviceDetails: {
-    flex: 1,
-  },
-  serviceTitle: {
-    fontSize: 16,
+  businessName: {
+    fontSize: 15,
     fontWeight: '600',
-    color: '#333',
+    color: '#1A1A1A',
     marginBottom: 4,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F5E9',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+  },
+  statusBadgeClosed: {
+    backgroundColor: '#FFEBEE',
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#4CAF50',
+    marginRight: 4,
+  },
+  statusDotClosed: {
+    backgroundColor: '#F44336',
+  },
+  statusText: {
+    fontSize: 12,
+    color: '#2E7D32',
+    fontWeight: '500',
+  },
+  statusTextClosed: {
+    color: '#C62828',
+  },
+  serviceBadge: {
+    backgroundColor: '#EBF5FF',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  serviceBadgeText: {
+    fontSize: 12,
+    color: '#007AFF',
+    fontWeight: '500',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#F0F0F0',
+    marginVertical: 12,
+  },
+  serviceContent: {
+    marginTop: 4,
+  },
+  serviceName: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: 12,
   },
   serviceMetaInfo: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 16,
   },
   metaItem: {
     flexDirection: 'row',
@@ -377,58 +459,59 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 16,
+    color: '#1A1A1A',
+    marginBottom: 12,
   },
   dateList: {
-    paddingHorizontal: 4,
+    marginHorizontal: -16,
   },
-  dateButton: {
+  dateListContent: {
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  dateCard: {
     width: 72,
     height: 84,
-    borderRadius: 12,
-    backgroundColor: '#FFF',
-    alignItems: 'center',
+    backgroundColor: '#F8F9FA',
+    borderRadius: 16,
     justifyContent: 'center',
-    marginHorizontal: 4,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
   },
-  dateButtonSelected: {
+  dateCardSelected: {
     backgroundColor: '#007AFF',
+    borderColor: '#007AFF',
   },
-  dateButtonUnavailable: {
-    backgroundColor: '#F8F8F8',
-    opacity: 0.6,
+  dateCardUnavailable: {
+    backgroundColor: '#F5F5F5',
+    borderColor: '#E9ECEF',
   },
   dateDay: {
-    fontSize: 14,
+    fontSize: 15,
     color: '#666',
     marginBottom: 4,
+    fontWeight: '500',
   },
-  dateNumber: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 2,
-  },
-  dateMonth: {
-    fontSize: 12,
-    color: '#666',
+  dateText: {
+    fontSize: 13,
+    color: '#1A1A1A',
   },
   dateTextSelected: {
     color: '#FFF',
+  },
+  dateTextUnavailable: {
+    color: '#CCC',
+  },
+  availableDateIndicator: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#4CAF50',
+    position: 'absolute',
+    bottom: 12,
   },
   timeGrid: {
     flexDirection: 'row',
@@ -436,122 +519,118 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   timeSlot: {
-    width: '23%',
-    paddingVertical: 12,
-    backgroundColor: '#FFF',
-    borderRadius: 8,
+    width: (Platform.OS === 'ios' ? 343 : 360) / 4 - 8,
+    height: 44,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    justifyContent: 'center',
     alignItems: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
-  },
-  timeSlotUnavailable: {
-    backgroundColor: '#F8F8F8',
-    opacity: 0.6,
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
   },
   timeSlotSelected: {
     backgroundColor: '#007AFF',
+    borderColor: '#007AFF',
+  },
+  timeSlotUnavailable: {
+    backgroundColor: '#F5F5F5',
+    borderColor: '#E9ECEF',
   },
   timeSlotText: {
-    fontSize: 14,
-    color: '#333',
-    marginBottom: 2,
-  },
-  timeSlotTextUnavailable: {
-    color: '#999',
+    fontSize: 15,
+    color: '#1A1A1A',
+    fontWeight: '500',
   },
   timeSlotTextSelected: {
     color: '#FFF',
   },
-  availableText: {
-    fontSize: 10,
-    color: '#4CAF50',
+  timeSlotTextUnavailable: {
+    color: '#CCC',
   },
-  unavailableText: {
-    fontSize: 10,
-    color: '#999',
+  availableIndicator: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#4CAF50',
+    position: 'absolute',
+    bottom: 8,
   },
-  summary: {
+  legend: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 16,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+  },
+  legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F0F9FF',
-    margin: 16,
-    padding: 16,
-    borderRadius: 12,
-    gap: 12,
+    gap: 6,
   },
-  summaryContent: {
-    flex: 1,
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
-  summaryTitle: {
-    fontSize: 14,
+  legendText: {
+    fontSize: 13,
     color: '#666',
-    marginBottom: 4,
   },
-  summaryText: {
-    fontSize: 16,
-    color: '#007AFF',
-    fontWeight: '500',
-  },
-  rulesContainer: {
-    margin: 16,
+  bottomContainer: {
     padding: 16,
+    paddingBottom: Platform.OS === 'ios' ? 16 : 16,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
     backgroundColor: '#FFF',
-    borderRadius: 12,
+    position: 'absolute',
+    bottom: Platform.OS === 'ios' ? 85 : 65,
+    left: 0,
+    right: 0,
+    borderRadius: 20,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: { width: 0, height: -3 },
         shadowOpacity: 0.1,
-        shadowRadius: 4,
+        shadowRadius: 6,
       },
       android: {
-        elevation: 2,
+        elevation: 8,
       },
     }),
   },
-  rulesTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 12,
-  },
-  ruleItem: {
+  summaryContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
+    justifyContent: 'space-between',
   },
-  ruleText: {
+  summaryInfo: {
     flex: 1,
-    fontSize: 14,
-    color: '#666',
   },
-  bottomButton: {
-    padding: 16,
-    backgroundColor: '#FFF',
-    borderTopWidth: 1,
-    borderTopColor: '#EFEFEF',
+  summaryTitle: {
+    fontSize: 13,
+    color: '#666',
+    marginBottom: 2,
+  },
+  summaryText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1A1A1A',
   },
   confirmButton: {
+    backgroundColor: '#007AFF',
+    height: 48,
+    borderRadius: 24,
+    paddingHorizontal: 24,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#007AFF',
-    padding: 16,
-    borderRadius: 12,
     gap: 8,
+    justifyContent: 'center',
+    minWidth: 140,
   },
   confirmButtonDisabled: {
-    opacity: 0.6,
+    backgroundColor: '#E9ECEF',
   },
   confirmButtonText: {
     fontSize: 16,
@@ -559,5 +638,4 @@ const styles = StyleSheet.create({
     color: '#FFF',
   },
 });
-
 export default BookAppointment; 

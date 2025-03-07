@@ -3,277 +3,411 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   TouchableOpacity,
-  Image,
-  TextInput,
+  ScrollView,
+  SafeAreaView,
   Platform,
+  TextInput,
+  FlatList,
+  Dimensions,
+  RefreshControl,
+  StatusBar,
+  Image,
+  Modal,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useNavigation } from '@react-navigation/native';
+import BusinessCard from '../../components/BusinessCard';
 
-const BusinessCard = ({ item, onPress }) => (
-  <TouchableOpacity style={styles.businessCard} onPress={onPress}>
-    <Image source={{ uri: item.image }} style={styles.businessImage} />
-    <View style={styles.businessInfo}>
-      <Text style={styles.businessName}>{item.name}</Text>
-      <View style={styles.ratingContainer}>
-        <Icon name="star" size={16} color="#FFB800" />
-        <Text style={styles.ratingText}>{item.rating}</Text>
-        <Text style={styles.reviewCount}>({item.reviewCount} değerlendirme)</Text>
-      </View>
-      <Text style={styles.businessCategory}>{item.category}</Text>
-      <View style={styles.locationContainer}>
-        <Icon name="map-marker" size={14} color="#666" />
-        <Text style={styles.locationText}>{item.location}</Text>
-      </View>
-      <View style={styles.popularityContainer}>
-        <Icon name="trending-up" size={16} color="#28A745" />
-        <Text style={styles.popularityText}>{item.popularityReason}</Text>
-      </View>
-    </View>
+const { width } = Dimensions.get('window');
+const CARD_WIDTH = width - 32; // Tek kolon için tam genişlik
+
+const FilterButton = ({ title, isActive, onPress, icon }) => (
+  <TouchableOpacity
+    style={[styles.filterButton, isActive && styles.filterButtonActive]}
+    onPress={onPress}
+  >
+    <Icon name={icon} size={20} color={isActive ? '#007AFF' : '#666'} />
+    <Text style={[styles.filterButtonText, isActive && styles.filterButtonTextActive]}>
+      {title}
+    </Text>
   </TouchableOpacity>
 );
 
-const PopularBusinesses = ({ navigation }) => {
+const PopularBusinesses = () => {
+  const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [activeFilter, setActiveFilter] = useState('all');
+  const [refreshing, setRefreshing] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
 
-  const categories = [
-    { id: 'all', label: 'Tümü' },
-    { id: 'health', label: 'Sağlık' },
-    { id: 'sports', label: 'Spor' },
-    { id: 'beauty', label: 'Güzellik' },
-    { id: 'wellness', label: 'Wellness' },
+  const filters = [
+    { id: 'all', title: 'Tümü', icon: 'apps' },
+    { id: 'open', title: 'Açık', icon: 'clock-outline' },
+    { id: 'rating', title: 'En İyi', icon: 'star-outline' },
+    { id: 'distance', title: 'En Yakın', icon: 'map-marker-outline' },
   ];
 
   // Örnek veri - gerçek uygulamada API'den gelecek
   const businesses = [
     {
-      id: '1',
-      image: 'https://example.com/business1.jpg',
+      id: '4',
       name: 'Fitness Zone',
-      rating: 4.9,
-      reviewCount: 312,
-      category: 'Spor Salonu',
+      category: 'Fitness Center',
+      image: 'https://images.unsplash.com/photo-1570829460005-c840387bb1ca?w=800',
       location: 'Talas, Kayseri',
-      popularityReason: 'Son 30 günde 500+ ziyaret',
-      categoryId: 'sports',
+      rating: 4.9,
+      reviewCount: 245,
+      isOpen: true,
+      hours: "06:00 - 23:00",
+      phone: '+90 (352) 123 45 67',
+      description: '24/7 hizmet veren modern fitness merkezi.',
+      services: [
+        { name: 'Aylık Üyelik', price: 900 },
+        { name: 'Yıllık Üyelik', price: 8000 },
+        { name: 'PT Seansı', price: 400 }
+      ]
     },
     {
-      id: '2',
-      image: 'https://example.com/business2.jpg',
-      name: 'Modern Diş Kliniği',
-      rating: 4.8,
-      reviewCount: 156,
-      category: 'Diş Hekimi',
+      id: '5',
+      name: 'Beauty Spa & Wellness',
+      category: 'Spa Merkezi',
+      image: 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=800',
       location: 'Melikgazi, Kayseri',
-      popularityReason: 'Bu hafta en çok tercih edilen',
-      categoryId: 'health',
+      rating: 4.6,
+      reviewCount: 167,
+      isOpen: false,
+      hours: "10:00 - 22:00",
+      phone: '+90 (352) 234 56 78',
+      description: 'Huzurlu bir spa deneyimi için sizleri bekliyoruz.',
+      services: [
+        { name: 'Klasik Masaj', price: 500 },
+        { name: 'Aromaterapi', price: 700 },
+        { name: 'VIP Paket', price: 1500 }
+      ]
     },
     {
-      id: '3',
-      image: 'https://example.com/business3.jpg',
-      name: 'Lotus Spa Center',
-      rating: 4.7,
-      reviewCount: 89,
-      category: 'Spa & Masaj',
+      id: '6',
+      name: 'Kuaför Mahmut',
+      category: 'Kuaför',
+      image: 'https://images.unsplash.com/photo-1598887142487-3c854d51d185?w=800',
       location: 'Kocasinan, Kayseri',
-      popularityReason: 'Yükselen popülerlik',
-      categoryId: 'wellness',
-    },
-    // Daha fazla işletme eklenebilir
+      rating: 4.8,
+      reviewCount: 198,
+      isOpen: true,
+      hours: "09:00 - 20:00",
+      phone: '+90 (352) 345 67 89',
+      description: 'Profesyonel saç kesimi ve bakımı hizmetleri.',
+      services: [
+        { name: 'Saç Kesimi', price: 150 },
+        { name: 'Saç Boyama', price: 400 },
+        { name: 'Keratin Bakım', price: 800 }
+      ]
+    }
   ];
 
-  const filteredBusinesses = businesses.filter(business => {
-    const matchesSearch = business.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || business.categoryId === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const handleRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 1500);
+  };
 
-  const renderCategoryItem = ({ item }) => (
-    <TouchableOpacity
-      style={[
-        styles.categoryButton,
-        selectedCategory === item.id && styles.categoryButtonActive,
-      ]}
-      onPress={() => setSelectedCategory(item.id)}
+  const handleBusinessPress = (business) => {
+    navigation.navigate('BusinessDetail', {
+      businessId: business.id,
+      businessName: business.name,
+      businessImage: business.image,
+      businessCategory: business.category,
+      businessRating: business.rating,
+      businessReviewCount: business.reviewCount,
+      businessLocation: business.location,
+      businessHours: business.hours,
+      businessIsOpen: business.isOpen,
+      businessPhone: business.phone,
+      businessDescription: business.description,
+      businessServices: business.services
+    });
+  };
+
+  const handleFilterPress = () => {
+    setShowFilterModal(true);
+  };
+
+  const renderFilterModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={showFilterModal}
+      onRequestClose={() => setShowFilterModal(false)}
     >
-      <Text
-        style={[
-          styles.categoryButtonText,
-          selectedCategory === item.id && styles.categoryButtonTextActive,
-        ]}
-      >
-        {item.label}
-      </Text>
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Filtrele</Text>
+            <TouchableOpacity 
+              onPress={() => setShowFilterModal(false)}
+              style={styles.closeButton}
+            >
+              <Icon name="close" size={24} color="#333" />
+            </TouchableOpacity>
+          </View>
+          
+          <ScrollView style={styles.modalBody}>
+            {filters.map(filter => (
+              <TouchableOpacity
+                key={filter.id}
+                style={[
+                  styles.modalFilterButton,
+                  activeFilter === filter.id && styles.modalFilterButtonActive
+                ]}
+                onPress={() => {
+                  setActiveFilter(filter.id);
+                  setShowFilterModal(false);
+                }}
+              >
+                <Icon 
+                  name={filter.icon} 
+                  size={24} 
+                  color={activeFilter === filter.id ? '#007AFF' : '#666'} 
+                />
+                <Text style={[
+                  styles.modalFilterText,
+                  activeFilter === filter.id && styles.modalFilterTextActive
+                ]}>
+                  {filter.title}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  const renderBusinessCard = ({ item }) => (
+    <TouchableOpacity 
+      style={styles.cardContainer}
+      onPress={() => handleBusinessPress(item)}
+      activeOpacity={0.9}
+    >
+      <BusinessCard {...item} />
     </TouchableOpacity>
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
+      
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Icon name="chevron-left" size={28} color="#333" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Popüler İşletmeler</Text>
+        <View style={styles.headerRight} />
+      </View>
+
+      {/* Search Bar */}
       <View style={styles.searchContainer}>
         <Icon name="magnify" size={20} color="#666" style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
-          placeholder="Popüler işletmelerde ara..."
+          placeholder="İşletme veya hizmet ara..."
           value={searchQuery}
           onChangeText={setSearchQuery}
+          placeholderTextColor="#999"
         />
       </View>
 
-      <FlatList
-        data={categories}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        renderItem={renderCategoryItem}
-        keyExtractor={item => item.id}
-        style={styles.categoryList}
-        contentContainerStyle={styles.categoryContainer}
-      />
+      {/* Filters */}
+      <View style={styles.filtersWrapper}>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filtersContainer}
+        >
+          {filters.map(filter => (
+            <FilterButton
+              key={filter.id}
+              title={filter.title}
+              icon={filter.icon}
+              isActive={activeFilter === filter.id}
+              onPress={() => setActiveFilter(filter.id)}
+            />
+          ))}
+        </ScrollView>
+      </View>
 
+      {/* Business List */}
       <FlatList
-        data={filteredBusinesses}
-        renderItem={({ item }) => (
-          <BusinessCard
-            item={item}
-            onPress={() => navigation.navigate('BusinessDetail', { businessId: item.id })}
-          />
-        )}
+        data={businesses}
+        renderItem={renderBusinessCard}
         keyExtractor={item => item.id}
-        contentContainerStyle={[styles.businessList, { paddingBottom: 60 }]}
+        numColumns={2}
+        contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
+        columnWrapperStyle={styles.columnWrapper}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor="#007AFF"
+          />
+        }
+        ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
+        ListHeaderComponent={() => <View style={{ height: 8 }} />}
+        ListFooterComponent={() => <View style={{ height: 20 }} />}
       />
-    </View>
+      
+      {renderFilterModal()}
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: '#FFF',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#FFF',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1A1A1A',
+  },
+  headerRight: {
+    width: 40,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF',
-    margin: 16,
+    backgroundColor: '#F8F9FA',
+    marginHorizontal: 16,
+    marginVertical: 8,
     paddingHorizontal: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#EFEFEF',
+    height: 40,
+    borderRadius: 8,
   },
   searchIcon: {
     marginRight: 8,
   },
   searchInput: {
     flex: 1,
-    height: 44,
-    fontSize: 16,
+    fontSize: 14,
     color: '#333',
   },
-  categoryList: {
-    maxHeight: 44,
-    marginBottom: 8,
+  filtersWrapper: {
+    backgroundColor: '#FFF',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F3F5',
   },
-  categoryContainer: {
-    paddingHorizontal: 12,
-  },
-  categoryButton: {
+  filtersContainer: {
     paddingHorizontal: 16,
+    gap: 8,
+  },
+  filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#FFF',
+    backgroundColor: '#F8F9FA',
     marginHorizontal: 4,
+    gap: 6,
     borderWidth: 1,
-    borderColor: '#EFEFEF',
+    borderColor: '#E9ECEF',
   },
-  categoryButtonActive: {
-    backgroundColor: '#007AFF',
+  filterButtonActive: {
+    backgroundColor: '#EBF5FF',
     borderColor: '#007AFF',
   },
-  categoryButtonText: {
-    fontSize: 14,
+  filterButtonText: {
+    fontSize: 13,
+    fontWeight: '500',
     color: '#666',
   },
-  categoryButtonTextActive: {
-    color: '#FFF',
+  filterButtonTextActive: {
+    color: '#007AFF',
+    fontWeight: '600',
   },
-  businessList: {
-    padding: 12,
+  listContainer: {
+    padding: 16,
+    paddingTop: 8,
   },
-  businessCard: {
+  columnWrapper: {
+    gap: 16,
+    justifyContent: 'space-between',
+  },
+  cardContainer: {
+    flex: 1,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
     backgroundColor: '#FFF',
-    borderRadius: 12,
-    marginBottom: 12,
-    overflow: 'hidden',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 24,
+    maxHeight: '80%',
   },
-  businessImage: {
-    width: '100%',
-    height: 200,
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F3F5',
   },
-  businessInfo: {
-    padding: 12,
-  },
-  businessName: {
+  modalTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
+    color: '#1A1A1A',
   },
-  ratingContainer: {
+  closeButton: {
+    padding: 4,
+  },
+  modalBody: {
+    padding: 16,
+  },
+  modalFilterButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    backgroundColor: '#F8F9FA',
+    gap: 12,
   },
-  ratingText: {
-    fontSize: 14,
+  modalFilterButtonActive: {
+    backgroundColor: '#EBF5FF',
+  },
+  modalFilterText: {
+    fontSize: 16,
     color: '#333',
     fontWeight: '500',
-    marginLeft: 4,
   },
-  reviewCount: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 4,
-  },
-  businessCategory: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 4,
-  },
-  locationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  locationText: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 4,
-  },
-  popularityContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#E8F5E9',
-    padding: 8,
-    borderRadius: 8,
-  },
-  popularityText: {
-    fontSize: 14,
-    color: '#28A745',
-    marginLeft: 4,
-    flex: 1,
+  modalFilterTextActive: {
+    color: '#007AFF',
+    fontWeight: '600',
   },
 });
 

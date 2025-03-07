@@ -3,12 +3,13 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import AuthNavigator from "./src/navigation/AuthNavigator";
 import BottomTabNavigator from "./src/navigation/BottomTabNavigator";
+import { navigationRef } from './src/navigation/RootNavigation';
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <Stack.Navigator
         screenOptions={{
           headerShown: false,

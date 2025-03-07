@@ -7,6 +7,7 @@ import Icon from "react-native-vector-icons/Ionicons";
 // ********** Screens/Home **********
 import HomeScreen from "../screens/Home/HomeScreen";
 import SearchScreen from "../screens/Home/SearchScreen";
+import MapScreen from "../screens/Map/MapScreen";
 
 // ********** Screens/Profile **********
 import ProfileScreen from "../screens/Profile/ProfileScreen";
@@ -18,6 +19,7 @@ import SettingsScreen from "../screens/Settings/SettingsScreen";
 import ProfileDetails from "../screens/Settings/ProfileDetails";
 import AddressSettings from "../screens/Settings/AddressSettings";
 import SecuritySettings from "../screens/Settings/SecuritySettings";
+import SecurityPolicy from "../screens/Settings/SecurityPolicy";
 import LanguageSettings from "../screens/Settings/LanguageSettings";
 import AppearanceSettings from "../screens/Settings/AppearanceSettings";
 import PrivacySettings from "../screens/Settings/PrivacySettings";
@@ -62,6 +64,7 @@ import PopularBusinesses from '../screens/Home/PopularBusinesses';
 const Tab = createBottomTabNavigator();
 const ProfileStack = createNativeStackNavigator();
 const HomeStack = createNativeStackNavigator();
+const FavoritesStack = createNativeStackNavigator();
 
 const CustomTabButton = ({ children, onPress }) => (
   <TouchableOpacity
@@ -102,6 +105,7 @@ const ProfileStackScreen = () => {
       <ProfileStack.Screen name="ProfileDetails" component={ProfileDetails} />
       <ProfileStack.Screen name="AddressSettings" component={AddressSettings} />
       <ProfileStack.Screen name="SecuritySettings" component={SecuritySettings} />
+      <ProfileStack.Screen name="SecurityPolicy" component={SecurityPolicy} />
       <ProfileStack.Screen name="LanguageSettings" component={LanguageSettings} />
       <ProfileStack.Screen name="AppearanceSettings" component={AppearanceSettings} />
       <ProfileStack.Screen name="PrivacySettings" component={PrivacySettings} />
@@ -110,6 +114,7 @@ const ProfileStackScreen = () => {
       <ProfileStack.Screen name="HelpCenter" component={HelpCenter} />
       <ProfileStack.Screen name="About" component={About} />
       <ProfileStack.Screen name="Legal" component={Legal} />
+      <ProfileStack.Screen name="MapScreen" component={MapScreen} />
 
       <ProfileStack.Screen name="MyAppointments" component={MyAppointments} />
       <ProfileStack.Screen name="NewAppointment" component={NewAppointment} />
@@ -118,6 +123,7 @@ const ProfileStackScreen = () => {
       
       <ProfileStack.Screen name="MyReviews" component={MyReviews} />
       <ProfileStack.Screen name="FavoritePlaces" component={FavoritePlaces} />
+      <ProfileStack.Screen name="BusinessDetail" component={BusinessDetail} />
 
       <ProfileStack.Screen name="AddNewAddress" component={AddNewAddress} />
       <ProfileStack.Screen name="PrivacyPolicy" component={PrivacyPolicy} />
@@ -141,11 +147,6 @@ const ProfileStackScreen = () => {
         component={VideoGuides}
         options={{ headerShown: false }}
       />
-      <ProfileStack.Screen 
-        name="BusinessDetail" 
-        component={BusinessDetail}
-        options={{ headerShown: false }}
-      />
     </ProfileStack.Navigator>
   );
 };
@@ -156,6 +157,11 @@ function HomeStackScreen() {
       <HomeStack.Screen 
         name="HomeScreen" 
         component={HomeScreen}
+        options={{ headerShown: false }}
+      />
+           <HomeStack.Screen 
+        name="MapScreen" 
+        component={MapScreen}
         options={{ headerShown: false }}
       />
       <HomeStack.Screen 
@@ -202,6 +208,15 @@ function HomeStackScreen() {
   );
 }
 
+const FavoritesStackScreen = () => {
+  return (
+    <FavoritesStack.Navigator screenOptions={{ headerShown: false }}>
+      <FavoritesStack.Screen name="FavoritesMain" component={FavoritePlaces} />
+      <FavoritesStack.Screen name="BusinessDetail" component={BusinessDetail} />
+    </FavoritesStack.Navigator>
+  );
+};
+
 const BottomTabNavigator = () => {
   return (
     <>
@@ -238,31 +253,22 @@ const BottomTabNavigator = () => {
             },
           }}
         />
+       
         <Tab.Screen
-          name="Search"
-          component={SearchScreen}
+          name="Map"
+          component={MapScreen}
           options={{
             tabBarIcon: ({ color, size }) => (
-              <Icon name="search-outline" color={color} size={size} />
+              <Icon name="map-outline" color={color} size={size} />
             ),
             tabBarIconStyle: {
               marginTop: 5,
             },
           }}
         />
-
-        {/* Orta Buton */}
-        {/* <Tab.Screen
-          name="Add"
-          component={HomeScreen}
-          options={{
-            tabBarButton: (props) => <CustomTabButton {...props} />,
-          }}
-        /> */}
-
         <Tab.Screen
           name="Favorites"
-          component={HomeScreen}
+          component={FavoritesStackScreen}
           options={{
             tabBarIcon: ({ color, size }) => (
               <Icon name="heart-outline" color={color} size={size} />

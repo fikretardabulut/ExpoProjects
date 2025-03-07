@@ -8,36 +8,81 @@ import {
   Switch,
   SafeAreaView,
   Platform,
+  StatusBar,
+  Animated,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
+import { BlurView } from 'expo-blur';
 
-const SettingItem = ({ icon, title, description, value, onToggle, type = 'switch' }) => (
-  <View style={styles.settingItem}>
-    <View style={styles.settingInfo}>
-      <View style={styles.settingIconContainer}>
-        <Icon name={icon} size={22} color="#333" />
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
+
+const SettingItem = ({ icon, title, description, value, onToggle, type = 'switch', isLast = false }) => {
+  const scale = new Animated.Value(1);
+
+  const onPressIn = () => {
+    Animated.spring(scale, {
+      toValue: 0.98,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const onPressOut = () => {
+    Animated.spring(scale, {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  return (
+    <AnimatedTouchable 
+      style={[
+        styles.settingItem,
+        !isLast && styles.settingItemBorder,
+        { transform: [{ scale }] }
+      ]}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+      onPress={type === 'navigation' ? onToggle : undefined}
+      activeOpacity={1}
+    >
+      <View style={styles.settingInfo}>
+        <View style={[
+          styles.settingIconContainer,
+          { backgroundColor: value ? '#EBF5FF' : '#F8F9FA' }
+        ]}>
+          <Icon 
+            name={icon} 
+            size={22} 
+            color={value ? '#007AFF' : '#666'} 
+          />
+        </View>
+        <View style={styles.settingTextContainer}>
+          <Text style={styles.settingTitle}>{title}</Text>
+          {description && (
+            <Text style={styles.settingDescription}>{description}</Text>
+          )}
+        </View>
       </View>
-      <View style={styles.settingTextContainer}>
-        <Text style={styles.settingText}>{title}</Text>
-        {description && (
-          <Text style={styles.settingDescription}>{description}</Text>
-        )}
-      </View>
-    </View>
-    {type === 'switch' ? (
-      <Switch
-        value={value}
-        onValueChange={onToggle}
-        trackColor={{ false: '#D1D1D6', true: '#007AFF' }}
-        thumbColor={Platform.OS === 'ios' ? '#FFF' : value ? '#FFF' : '#F4F3F4'}
-        ios_backgroundColor="#D1D1D6"
-      />
-    ) : (
-      <Icon name="chevron-right" size={24} color="#666" />
-    )}
-  </View>
-);
+      {type === 'switch' ? (
+        <Switch
+          value={value}
+          onValueChange={onToggle}
+          trackColor={{ false: '#E9ECEF', true: '#007AFF' }}
+          thumbColor={'#FFF'}
+          ios_backgroundColor="#E9ECEF"
+          style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}
+        />
+      ) : (
+        <View style={styles.navigationButton}>
+          <Text style={styles.navigationButtonText}>Düzenle</Text>
+          <Icon name="chevron-right" size={20} color="#007AFF" />
+        </View>
+      )}
+    </AnimatedTouchable>
+  );
+};
+
 
 const NotificationSettingsScreen = () => {
   const navigation = useNavigation();
@@ -59,6 +104,8 @@ const NotificationSettingsScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
+      
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity 
@@ -66,7 +113,7 @@ const NotificationSettingsScreen = () => {
           style={styles.backButton}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Icon name="arrow-left" size={24} color="#333" />
+          <Icon name="chevron-left" size={28} color="#1A1A1A" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Bildirim Ayarları</Text>
         <View style={styles.headerRight} />
@@ -75,13 +122,14 @@ const NotificationSettingsScreen = () => {
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={styles.scrollViewContent}
+        showsVerticalScrollIndicator={false}
       >
         {/* General Settings */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Genel Ayarlar</Text>
           <View style={styles.settingsList}>
             <SettingItem
-              icon="volume-high"
+              icon="bell-outline"
               title="Bildirim Sesi"
               description="Bildirimlerde ses çal"
               value={settings.sound}
@@ -93,13 +141,7 @@ const NotificationSettingsScreen = () => {
               description="Bildirimlerde titreşim"
               value={settings.vibration}
               onToggle={() => toggleSetting('vibration')}
-            />
-            <SettingItem
-              icon="bell-ring"
-              title="Uygulama İçi Bildirimler"
-              description="Uygulama açıkken bildirim göster"
-              value={settings.inAppNotifications}
-              onToggle={() => toggleSetting('inAppNotifications')}
+              isLast
             />
           </View>
         </View>
@@ -109,18 +151,19 @@ const NotificationSettingsScreen = () => {
           <Text style={styles.sectionTitle}>Gizlilik</Text>
           <View style={styles.settingsList}>
             <SettingItem
-              icon="eye"
+              icon="eye-outline"
               title="Bildirim Önizleme"
               description="Kilit ekranında içerik göster"
               value={settings.showPreview}
               onToggle={() => toggleSetting('showPreview')}
             />
             <SettingItem
-              icon="folder"
+              icon="folder-outline"
               title="Bildirim Gruplandırma"
               description="Benzer bildirimleri grupla"
               value={settings.grouping}
               onToggle={() => toggleSetting('grouping')}
+              isLast
             />
           </View>
         </View>
@@ -137,11 +180,12 @@ const NotificationSettingsScreen = () => {
               onToggle={() => toggleSetting('doNotDisturb')}
             />
             <SettingItem
-              icon="clock-outline"
+              icon="clock-time-four-outline"
               title="Sessiz Saatler"
               description="Rahatsız etme zaman aralığını ayarla"
               type="navigation"
-              onPress={() => {}}
+              onToggle={() => {}}
+              isLast
             />
           </View>
         </View>
@@ -151,18 +195,19 @@ const NotificationSettingsScreen = () => {
           <Text style={styles.sectionTitle}>Gelişmiş Ayarlar</Text>
           <View style={styles.settingsList}>
             <SettingItem
-              icon="tune"
+              icon="tune-vertical-variant"
               title="Bildirim Kanalları"
               description="Bildirim türlerini özelleştir"
               type="navigation"
-              onPress={() => {}}
+              onToggle={() => {}}
             />
             <SettingItem
               icon="refresh"
               title="Varsayılana Sıfırla"
               description="Tüm bildirim ayarlarını sıfırla"
               type="navigation"
-              onPress={() => {}}
+              onToggle={() => {}}
+              isLast
             />
           </View>
         </View>
@@ -174,40 +219,30 @@ const NotificationSettingsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: '#F5F5F5',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: 16,
+    height: 56,
     backgroundColor: '#FFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#EFEFEF',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
+    borderBottomColor: '#F0F0F0',
   },
   backButton: {
-    padding: 8,
-    marginLeft: -8,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '600',
-    color: '#333',
-    textAlign: 'center',
+    color: '#000',
     flex: 1,
-    marginHorizontal: 16,
+    textAlign: 'center',
   },
   headerRight: {
     width: 40,
@@ -216,72 +251,86 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollViewContent: {
-    paddingBottom: 80, // Navigation bar height + extra padding
+    paddingTop: 16,
+    paddingBottom: 32,
   },
   section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#666',
+    paddingHorizontal: 16,
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  settingsList: {
     backgroundColor: '#FFF',
-    marginTop: 12,
-    paddingVertical: 20,
+    borderRadius: 16,
+    marginHorizontal: 16,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
       },
       android: {
-        elevation: 2,
+        elevation: 3,
       },
     }),
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    paddingHorizontal: 20,
-    marginBottom: 16,
-    letterSpacing: -0.5,
-  },
-  settingsList: {
-    paddingHorizontal: 20,
-  },
   settingItem: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 16,
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: '#FFF',
+  },
+  settingItemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: '#EFEFEF',
+    borderBottomColor: '#F0F0F0',
   },
   settingInfo: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
     marginRight: 16,
   },
   settingIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F8F8F8',
+    width: 36,
+    height: 36,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: 12,
   },
   settingTextContainer: {
     flex: 1,
   },
-  settingText: {
+  settingTitle: {
     fontSize: 16,
-    color: '#333',
     fontWeight: '500',
-    letterSpacing: -0.3,
+    color: '#000',
+    marginBottom: 2,
+    letterSpacing: -0.2,
   },
   settingDescription: {
     fontSize: 13,
     color: '#666',
-    marginTop: 4,
-    letterSpacing: -0.2,
+    lineHeight: 18,
+  },
+  navigationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  navigationButtonText: {
+    fontSize: 15,
+    color: '#007AFF',
+    marginRight: 4,
   },
 });
 

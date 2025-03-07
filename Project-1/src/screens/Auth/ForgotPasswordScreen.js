@@ -29,28 +29,24 @@ const ForgotPasswordScreen = () => {
     setLoading(true);
 
     try {
-      // API isteği burada yapılacak
-      // Örnek başarılı yanıt:
-      const response = {
-        success: true,
-      };
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      if (response.success) {
-        Alert.alert(
-          'Başarılı',
-          'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.',
-          [
-            {
-              text: 'Tamam',
-              onPress: () => navigation.navigate('Login'),
-            },
-          ]
-        );
-      } else {
-        Alert.alert('Hata', 'Şifre sıfırlama işlemi başarısız oldu. Lütfen tekrar deneyin.');
-      }
+      Alert.alert(
+        'Başarılı',
+        'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.',
+        [
+          {
+            text: 'Tamam',
+            onPress: () => navigation.navigate('Login'),
+          },
+        ]
+      );
     } catch (error) {
-      Alert.alert('Hata', 'Bir sorun oluştu. Lütfen tekrar deneyin.');
+      Alert.alert(
+        'Hata',
+        'Şifre sıfırlama işlemi başarısız oldu. Lütfen tekrar deneyin.'
+      );
     } finally {
       setLoading(false);
     }

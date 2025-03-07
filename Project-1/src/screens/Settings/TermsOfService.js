@@ -101,12 +101,12 @@ const TermsOfService = () => {
             <Text style={styles.sectionText}>
               Kullanım koşulları hakkında sorularınız için:
             </Text>
-            <Text style={styles.contactInfo}>E-posta: terms@example.com</Text>
-            <Text style={styles.contactInfo}>Tel: +90 xxx xxx xx xx</Text>
+            <Text style={styles.contactInfo}>E-posta: terms@catenasoft.tr</Text>
+            <Text style={styles.contactInfo}>Tel: +90 551 506 05 56</Text>
           </View>
 
           <Text style={styles.lastUpdate}>
-            Son güncelleme: 1 Mart 2024
+            Son güncelleme: 05.03.2025
           </Text>
         </View>
       </ScrollView>

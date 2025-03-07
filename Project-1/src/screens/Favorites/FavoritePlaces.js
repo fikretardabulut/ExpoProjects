@@ -8,37 +8,66 @@ import {
   SafeAreaView,
   Platform,
   Image,
+  Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 
-const RatingBadge = ({ rating }) => (
+const { width } = Dimensions.get('window');
+const cardWidth = width - 32; // 16 padding on each side
+
+const RatingBadge = ({ rating, reviewCount }) => (
   <View style={styles.ratingBadge}>
-    <Icon name="star" size={12} color="#FFB800" />
+    <Icon name="star" size={14} color="#FFB800" />
     <Text style={styles.ratingText}>{rating.toFixed(1)}</Text>
+    {reviewCount && (
+      <Text style={styles.reviewCount}>({reviewCount})</Text>
+    )}
+  </View>
+);
+
+const CategoryBadge = ({ category }) => (
+  <View style={styles.categoryBadge}>
+    <Text style={styles.categoryText}>{category}</Text>
   </View>
 );
 
 const PlaceCard = ({ place, onPress, onFavoritePress }) => (
   <TouchableOpacity style={styles.placeCard} onPress={onPress}>
-    <Image source={{ uri: place.image }} style={styles.placeImage} />
-    <TouchableOpacity 
-      style={styles.favoriteButton}
-      onPress={onFavoritePress}
-    >
-      <Icon name="heart" size={20} color="#FF3B30" />
-    </TouchableOpacity>
-    {place.rating && <RatingBadge rating={place.rating} />}
+    <View style={styles.imageContainer}>
+      <Image 
+        source={{ uri: place.image }} 
+        style={styles.placeImage}
+        defaultSource={require('../../../assets/placeholder.png')}
+      />
+      <TouchableOpacity 
+        style={styles.favoriteButton}
+        onPress={onFavoritePress}
+      >
+        <Icon name="heart" size={22} color="#FF3B30" />
+      </TouchableOpacity>
+      <View style={styles.badgeContainer}>
+        <RatingBadge rating={place.rating} reviewCount={place.reviewCount} />
+        <CategoryBadge category={place.category} />
+      </View>
+    </View>
     <View style={styles.placeInfo}>
-      <Text style={styles.placeName}>{place.name}</Text>
+      <Text style={styles.placeName} numberOfLines={1}>{place.name}</Text>
       <View style={styles.placeDetails}>
         <View style={styles.detailItem}>
           <Icon name="map-marker" size={16} color="#666" />
-          <Text style={styles.detailText}>{place.location}</Text>
+          <Text style={styles.detailText} numberOfLines={1}>{place.location}</Text>
         </View>
         <View style={styles.detailItem}>
-          <Icon name="clock-outline" size={16} color="#666" />
-          <Text style={styles.detailText}>{place.openStatus}</Text>
+          <Icon name="clock-outline" size={16} color={place.isOpen ? '#4CAF50' : '#FF3B30'} />
+          <Text 
+            style={[
+              styles.detailText, 
+              { color: place.isOpen ? '#4CAF50' : '#FF3B30' }
+            ]}
+          >
+            {place.isOpen ? 'Açık' : 'Kapalı'} • {place.hours}
+          </Text>
         </View>
       </View>
     </View>
@@ -50,32 +79,51 @@ const FavoritePlaces = () => {
   const [places] = useState([
     {
       id: '1',
-      name: 'Özel Dentist Ağız ve Diş Sağlığı Kliniği',
-      image: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=800',
+      name: 'Güzellik Salonu A',
+      category: 'Güzellik & Bakım',
+      image: 'https://images.unsplash.com/photo-1600948836101-f9ffda59d250?w=800',
       location: 'Melikgazi, Kayseri',
       rating: 4.8,
-      openStatus: 'Açık • 09:00 - 18:00',
+      reviewCount: 128,
+      isOpen: true,
+      hours: '09:00 - 18:00',
     },
     {
       id: '2',
-      name: 'Kayseri Diş Hastanesi',
-      image: 'https://images.unsplash.com/photo-1629909615184-74f495363b67?w=800',
+      name: 'Spor Salonu B',
+      category: 'Spor & Fitness',
+      image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800',
       location: 'Kocasinan, Kayseri',
       rating: 4.5,
-      openStatus: 'Açık • 24 saat açık',
+      reviewCount: 89,
+      isOpen: true,
+      hours: '24 saat açık',
     },
     {
       id: '3',
-      name: 'Özel Dent Kliniği',
-      image: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=800',
+      name: 'Kafe C',
+      category: 'Yeme & İçme',
+      image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800',
       location: 'Talas, Kayseri',
-      rating: 4.6,
-      openStatus: 'Kapalı • 09:00 - 17:00',
+      rating: 4.9,
+      reviewCount: 156,
+      isOpen: false,
+      hours: '09:00 - 22:00',
     },
   ]);
 
   const handlePlacePress = (place) => {
-    navigation.navigate('PlaceDetails', { placeId: place.id });
+    navigation.navigate('BusinessDetail', { 
+      businessId: place.id,
+      businessName: place.name,
+      businessImage: place.image,
+      businessCategory: place.category,
+      businessRating: place.rating,
+      businessReviewCount: place.reviewCount,
+      businessLocation: place.location,
+      businessHours: place.hours,
+      businessIsOpen: place.isOpen
+    });
   };
 
   const handleFavoritePress = (placeId) => {
@@ -142,14 +190,18 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: 8,
+    marginLeft: -8,
+    width: 60,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#333',
+    flex: 1,
+    textAlign: 'center',
   },
   headerRight: {
-    width: 40,
+    width: 60,
   },
   scrollView: {
     flex: 1,
@@ -159,6 +211,7 @@ const styles = StyleSheet.create({
     paddingBottom: 90,
   },
   placeCard: {
+    width: cardWidth,
     backgroundColor: '#FFF',
     borderRadius: 12,
     marginBottom: 16,
@@ -175,9 +228,14 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  placeImage: {
+  imageContainer: {
+    position: 'relative',
     width: '100%',
     height: 200,
+  },
+  placeImage: {
+    width: '100%',
+    height: '100%',
   },
   favoriteButton: {
     position: 'absolute',
@@ -198,10 +256,13 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  ratingBadge: {
+  badgeContainer: {
     position: 'absolute',
     top: 12,
     left: 12,
+    gap: 8,
+  },
+  ratingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFF',
@@ -222,18 +283,33 @@ const styles = StyleSheet.create({
     }),
   },
   ratingText: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '600',
     color: '#333',
+  },
+  reviewCount: {
+    fontSize: 12,
+    color: '#666',
+  },
+  categoryBadge: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  categoryText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#FFF',
   },
   placeInfo: {
     padding: 16,
   },
   placeName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
     color: '#333',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   placeDetails: {
     gap: 8,
@@ -241,11 +317,12 @@ const styles = StyleSheet.create({
   detailItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   },
   detailText: {
     fontSize: 14,
     color: '#666',
+    flex: 1,
   },
 });
 

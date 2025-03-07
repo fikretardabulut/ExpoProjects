@@ -167,15 +167,6 @@ const AddressSettings = () => {
           ))}
         </View>
 
-        {/* Add New Address Button */}
-        <TouchableOpacity 
-          style={styles.addAddressButton}
-          onPress={handleAddAddress}
-        >
-          <Icon name="plus-circle-outline" size={24} color="#007AFF" />
-          <Text style={styles.addAddressText}>Yeni Adres Ekle</Text>
-        </TouchableOpacity>
-
         <Text style={styles.note}>
           Varsayılan adresiniz randevu oluştururken otomatik olarak seçilecektir.
         </Text>

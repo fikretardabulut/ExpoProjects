@@ -7,6 +7,7 @@ import {
   StyleSheet,
   SafeAreaView,
   Platform,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -16,21 +17,42 @@ const AppointmentDetails = () => {
   const route = useRoute();
   const { appointmentId } = route.params;
 
+  // Mock appointment data
   const appointmentData = {
     id: appointmentId,
-    doctorName: 'Dr. Ahmet Yılmaz',
-    specialty: 'Diş Hekimi',
+    businessName: 'Güzellik Salonu A',
+    category: 'Güzellik & Bakım',
+    service: 'Saç Bakımı',
     date: '15 Mart 2024',
     time: '14:30',
-    location: 'Özel Dentist Ağız ve Diş Sağlığı Kliniği',
-    address: 'Cumhuriyet Mah. Şehit Pilot Cad. No:12/3, Melikgazi, Kayseri',
+    location: 'Cumhuriyet Mah. Şehit Pilot Cad. No:12/3',
+    district: 'Melikgazi',
+    city: 'Kayseri',
     status: 'Onaylandı',
-    notes: 'Lütfen randevudan 15 dakika önce gelmeniz rica olunur.',
+    price: '350 TL',
+    duration: '45 dakika',
+    notes: 'Lütfen randevudan 10 dakika önce gelmeniz rica olunur.',
   };
 
   const handleCancel = () => {
-    // İptal işlemi
-    navigation.goBack();
+    Alert.alert(
+      'Randevu İptali',
+      'Randevunuzu iptal etmek istediğinizden emin misiniz?',
+      [
+        {
+          text: 'Vazgeç',
+          style: 'cancel',
+        },
+        {
+          text: 'İptal Et',
+          style: 'destructive',
+          onPress: () => {
+            // İptal işlemi
+            navigation.goBack();
+          },
+        },
+      ]
+    );
   };
 
   const handleReschedule = () => {
@@ -41,87 +63,117 @@ const AppointmentDetails = () => {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          onPress={() => navigation.goBack()} 
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
           <Icon name="arrow-left" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Randevu Detayları</Text>
-        <TouchableOpacity style={styles.moreButton}>
-          <Icon name="dots-horizontal" size={24} color="#333" />
-        </TouchableOpacity>
+        <View style={styles.headerRight} />
       </View>
 
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={[styles.scrollViewContent, { paddingBottom: 60 }]}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Status Badge */}
-        <View style={styles.statusContainer}>
-          <View style={styles.statusBadge}>
-            <Icon name="check-circle" size={20} color="#4CAF50" />
-            <Text style={styles.statusText}>{appointmentData.status}</Text>
-          </View>
-        </View>
-
-        {/* Doctor Info */}
+      <ScrollView style={[styles.scrollView, { marginTop: 10 }]}>
+        {/* Business Info */}
         <View style={styles.section}>
-          <View style={styles.doctorInfo}>
-            <View style={styles.doctorIconContainer}>
-              <Icon name="doctor" size={32} color="#007AFF" />
+          <View style={styles.businessCard}>
+            <View style={styles.businessIcon}>
+              <Icon name="store" size={32} color="#007AFF" />
             </View>
-            <View style={styles.doctorDetails}>
-              <Text style={styles.doctorName}>{appointmentData.doctorName}</Text>
-              <Text style={styles.specialty}>{appointmentData.specialty}</Text>
+            <View style={styles.businessInfo}>
+              <Text style={styles.businessName}>{appointmentData.businessName}</Text>
+              <Text style={styles.category}>{appointmentData.category}</Text>
+              <View style={[styles.statusBadge, 
+                { backgroundColor: appointmentData.status === 'Onaylandı' ? '#E8F5E9' : 
+                  appointmentData.status === 'Bekliyor' ? '#FFF3E0' : '#FFEBEE' }]}>
+                <Text style={[styles.statusText, 
+                  { color: appointmentData.status === 'Onaylandı' ? '#4CAF50' :
+                    appointmentData.status === 'Bekliyor' ? '#FF9800' : '#F44336' }]}>
+                  {appointmentData.status}
+                </Text>
+              </View>
             </View>
           </View>
         </View>
 
-        {/* Date & Time */}
+        {/* Service Details */}
         <View style={styles.section}>
-          <View style={styles.infoRow}>
-            <Icon name="calendar" size={24} color="#666" />
-            <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Tarih</Text>
-              <Text style={styles.infoValue}>{appointmentData.date}</Text>
+          <Text style={styles.sectionTitle}>Hizmet Bilgileri</Text>
+          <View style={styles.detailsCard}>
+            <View style={styles.detailRow}>
+              <Icon name="tag" size={20} color="#666" />
+              <View style={styles.detailContent}>
+                <Text style={styles.detailLabel}>Hizmet</Text>
+                <Text style={styles.detailValue}>{appointmentData.service}</Text>
+              </View>
+            </View>
+            <View style={styles.detailRow}>
+              <Icon name="clock-outline" size={20} color="#666" />
+              <View style={styles.detailContent}>
+                <Text style={styles.detailLabel}>Süre</Text>
+                <Text style={styles.detailValue}>{appointmentData.duration}</Text>
+              </View>
+            </View>
+            <View style={styles.detailRow}>
+              <Icon name="currency-try" size={20} color="#666" />
+              <View style={styles.detailContent}>
+                <Text style={styles.detailLabel}>Ücret</Text>
+                <Text style={styles.detailValue}>{appointmentData.price}</Text>
+              </View>
             </View>
           </View>
-          <View style={styles.infoRow}>
-            <Icon name="clock-outline" size={24} color="#666" />
-            <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Saat</Text>
-              <Text style={styles.infoValue}>{appointmentData.time}</Text>
+        </View>
+
+        {/* Date and Time */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Randevu Zamanı</Text>
+          <View style={styles.detailsCard}>
+            <View style={styles.detailRow}>
+              <Icon name="calendar" size={20} color="#666" />
+              <View style={styles.detailContent}>
+                <Text style={styles.detailLabel}>Tarih</Text>
+                <Text style={styles.detailValue}>{appointmentData.date}</Text>
+              </View>
+            </View>
+            <View style={styles.detailRow}>
+              <Icon name="clock-outline" size={20} color="#666" />
+              <View style={styles.detailContent}>
+                <Text style={styles.detailLabel}>Saat</Text>
+                <Text style={styles.detailValue}>{appointmentData.time}</Text>
+              </View>
             </View>
           </View>
         </View>
 
         {/* Location */}
         <View style={styles.section}>
-          <View style={styles.infoRow}>
-            <Icon name="hospital-building" size={24} color="#666" />
-            <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Klinik</Text>
-              <Text style={styles.infoValue}>{appointmentData.location}</Text>
-            </View>
-          </View>
-          <View style={styles.infoRow}>
-            <Icon name="map-marker" size={24} color="#666" />
-            <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Adres</Text>
-              <Text style={styles.infoValue}>{appointmentData.address}</Text>
+          <Text style={styles.sectionTitle}>Konum</Text>
+          <View style={styles.detailsCard}>
+            <View style={styles.detailRow}>
+              <Icon name="map-marker" size={20} color="#666" />
+              <View style={styles.detailContent}>
+                <Text style={styles.detailLabel}>Adres</Text>
+                <Text style={styles.detailValue}>{appointmentData.location}</Text>
+                <Text style={styles.detailValue}>{appointmentData.district}, {appointmentData.city}</Text>
+              </View>
             </View>
           </View>
         </View>
 
         {/* Notes */}
-        <View style={styles.section}>
-          <View style={styles.notesContainer}>
-            <Icon name="information" size={24} color="#666" />
-            <Text style={styles.notesText}>{appointmentData.notes}</Text>
+        {appointmentData.notes && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Notlar</Text>
+            <View style={styles.detailsCard}>
+              <View style={styles.detailRow}>
+                <Icon name="information" size={20} color="#666" />
+                <View style={styles.detailContent}>
+                  <Text style={styles.noteText}>{appointmentData.notes}</Text>
+                </View>
+              </View>
+            </View>
           </View>
-        </View>
+        )}
 
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
@@ -182,40 +234,32 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#333',
+    flex: 1,
+    textAlign: 'center',
   },
-  moreButton: {
-    padding: 8,
+  headerRight: {
+    width: 40,
   },
   scrollView: {
     flex: 1,
   },
-  scrollViewContent: {
-    padding: 16,
+  section: {
+    marginBottom: 20,
   },
-  statusContainer: {
-    alignItems: 'center',
-    paddingVertical: 16,
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginHorizontal: 16,
+    marginBottom: 8,
   },
-  statusBadge: {
+  businessCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E8F5E9',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  statusText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#4CAF50',
-    marginLeft: 6,
-  },
-  section: {
     backgroundColor: '#FFF',
     marginHorizontal: 16,
-    marginBottom: 16,
-    borderRadius: 12,
     padding: 16,
+    borderRadius: 12,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -228,57 +272,76 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  doctorInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  doctorIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#E8F2FF',
+  businessIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#F0F9FF',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
   },
-  doctorDetails: {
+  businessInfo: {
     flex: 1,
   },
-  doctorName: {
+  businessName: {
     fontSize: 18,
     fontWeight: '600',
     color: '#333',
     marginBottom: 4,
   },
-  specialty: {
+  category: {
     fontSize: 14,
     color: '#666',
+    marginBottom: 8,
   },
-  infoRow: {
+  statusBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  detailsCard: {
+    backgroundColor: '#FFF',
+    marginHorizontal: 16,
+    borderRadius: 12,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  detailRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
+    alignItems: 'flex-start',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EFEFEF',
   },
-  infoContent: {
+  detailContent: {
     marginLeft: 12,
     flex: 1,
   },
-  infoLabel: {
+  detailLabel: {
     fontSize: 12,
     color: '#666',
-    marginBottom: 2,
+    marginBottom: 4,
   },
-  infoValue: {
+  detailValue: {
     fontSize: 16,
     color: '#333',
   },
-  notesContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  notesText: {
-    flex: 1,
-    marginLeft: 12,
+  noteText: {
     fontSize: 14,
     color: '#666',
     lineHeight: 20,

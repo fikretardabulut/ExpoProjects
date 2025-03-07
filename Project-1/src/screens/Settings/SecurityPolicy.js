@@ -95,11 +95,11 @@ const SecurityPolicy = () => {
             <View style={styles.contactInfo}>
               <View style={styles.contactItem}>
                 <Icon name="email" size={20} color="#007AFF" />
-                <Text style={styles.contactText}>security@example.com</Text>
+                <Text style={styles.contactText}>security@catenasoft.tr</Text>
               </View>
               <View style={styles.contactItem}>
                 <Icon name="phone" size={20} color="#007AFF" />
-                <Text style={styles.contactText}>0850 XXX XX XX</Text>
+                <Text style={styles.contactText}>+90 551 506 05 56</Text>
               </View>
             </View>
           </View>
@@ -110,7 +110,7 @@ const SecurityPolicy = () => {
           </TouchableOpacity>
 
           <Text style={styles.lastUpdate}>
-            Son güncelleme: 1 Mart 2024
+            Son güncelleme: 05.03.2025
           </Text>
         </View>
       </ScrollView>

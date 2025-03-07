@@ -1,15 +1,171 @@
-import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  Alert,
+  ActivityIndicator
+} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
 
-const ProfileScreen = () => {
-  const navigation = useNavigation();
+const ProfileScreen = ({ navigation }) => {
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
   const [userStats] = useState({
     reservations: 12,
     reviews: 8,
     favoritePlaces: 15
   });
+
+  const loadProfile = async () => {
+    try {
+      setLoading(true);
+      
+      // Token kontrolü
+      const accessToken = await AsyncStorage.getItem('accessToken');
+      if (!accessToken) {
+        console.log('No access token found, redirecting to auth');
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Auth' }],
+        });
+        return;
+      }
+
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Mock user data
+      const mockUser = {
+        full_name: 'Fikret Arda Bulut',
+        email: 'ardablt2099@gmail.com',
+        phone: '+90 551 506 0556',
+        location: 'Kayseri',
+        bio: 'Akıllı şehir uygulaması kullanıcısı',
+        avatar: 'https://catenasoft.tr/9cd726073a42a0704d6feee18aee.jpg',
+        created_at: '2024-02-09T08:47:46.693Z'
+      };
+
+      setUser(mockUser);
+      await AsyncStorage.setItem('user', JSON.stringify(mockUser));
+      
+    } catch (error) {
+      console.error('Profile Screen - Load Error:', error);
+      Alert.alert('Hata', 'Profil bilgileri alınamadı');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadProfile();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  const handleImagePick = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Hata', 'Galeriye erişim izni gerekli');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        // Update local state with the new image
+        setUser(prev => ({ ...prev, avatar: result.assets[0].uri }));
+        
+        // Update AsyncStorage
+        const updatedUser = { ...user, avatar: result.assets[0].uri };
+        await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+      }
+    } catch (error) {
+      console.error('Image Pick Error:', error);
+      Alert.alert('Hata', 'Resim seçilirken bir hata oluştu');
+    }
+  };
+
+  const handleCameraCapture = async () => {
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Hata', 'Kamera erişim izni gerekli');
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        // Update local state with the new image
+        setUser(prev => ({ ...prev, avatar: result.assets[0].uri }));
+        
+        // Update AsyncStorage
+        const updatedUser = { ...user, avatar: result.assets[0].uri };
+        await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+      }
+    } catch (error) {
+      console.error('Camera Capture Error:', error);
+      Alert.alert('Hata', 'Fotoğraf çekilirken bir hata oluştu');
+    }
+  };
+
+  const handleAvatarPress = () => {
+    Alert.alert(
+      'Profil Resmi',
+      'Profil resmi eklemek için bir seçenek belirleyin',
+      [
+        {
+          text: 'Galeriden Seç',
+          onPress: handleImagePick
+        },
+        {
+          text: 'Fotoğraf Çek',
+          onPress: handleCameraCapture
+        },
+        {
+          text: 'İptal',
+          style: 'cancel'
+        }
+      ]
+    );
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
+      </View>
+    );
+  }
+
+  if (!user) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>Profil bilgileri yüklenemedi</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={loadProfile}>
+          <Text style={styles.retryButtonText}>Tekrar Dene</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <ScrollView 
@@ -17,139 +173,111 @@ const ProfileScreen = () => {
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.contentContainer}
     >
-      {/* Header Section */}
+      {/* Profile Header */}
       <View style={styles.header}>
         <View style={styles.profileImageContainer}>
-          <Image
-            source={{ uri: 'https://images.catenasoft.com/public/uploads/medium/b0/54/9cd726073a42a0704d6feee18aee.jpg' }}
-            style={styles.profileImage}
-          />
-          <TouchableOpacity style={styles.editImageButton}>
-            <Icon name="camera" size={20} color="#FFF" />
+          <TouchableOpacity onPress={handleAvatarPress}>
+            <Image
+              source={
+                user?.avatar
+                  ? { uri: user.avatar }
+                  : require('../../assets/default-avatar.png')
+              }
+              style={styles.profileImage}
+            />
+            <View style={styles.editImageButton}>
+              <Icon name="camera" size={18} color="#FFF" />
+            </View>
           </TouchableOpacity>
         </View>
-        <View style={styles.headerInfo}>
-          <Text style={styles.name}>Fikret Arda Bulut</Text>
-          <Text style={styles.email}>bilgi@ardabulut.tr</Text>
+        <Text style={styles.name}>{user.full_name}</Text>
+        <Text style={styles.email}>{user.email}</Text>
+        {user.location && (
           <View style={styles.locationContainer}>
-            <Icon name="map-marker" size={16} color="#007AFF" />
-            <Text style={styles.location}>Kayseri, Türkiye</Text>
+            <Icon name="map-marker" size={16} color="#666" />
+            <Text style={styles.location}>{user.location}</Text>
           </View>
-        </View>
+        )}
       </View>
 
       {/* Stats Section */}
       <View style={styles.statsContainer}>
-        <View style={styles.statColumn}>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{userStats.reservations}</Text>
-            <Text style={styles.statLabel}>Randevular</Text>
-          </View>
+        <View style={styles.statItem}>
+          <Text style={styles.statNumber}>{userStats.reservations}</Text>
+          <Text style={styles.statLabel}>Randevular</Text>
         </View>
         <View style={styles.statDivider} />
-        <View style={styles.statColumn}>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{userStats.reviews}</Text>
-            <Text style={styles.statLabel}>Değerlendirmeler</Text>
-          </View>
+        <View style={styles.statItem}>
+          <Text style={styles.statNumber}>{userStats.reviews}</Text>
+          <Text style={styles.statLabel}>Değerlendirmeler</Text>
         </View>
         <View style={styles.statDivider} />
-        <View style={styles.statColumn}>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{userStats.favoritePlaces}</Text>
-            <Text style={styles.statLabel}>Favori Mekanlar</Text>
-          </View>
+        <View style={styles.statItem}>
+          <Text style={styles.statNumber}>{userStats.favoritePlaces}</Text>
+          <Text style={styles.statLabel}>Favori Mekanlar</Text>
         </View>
-      </View>
-
-      {/* Quick Actions */}
-      <View style={styles.quickActions}>
-        <TouchableOpacity 
-          style={styles.actionButton} 
-          onPress={() => navigation.navigate('EditProfileScreen')}
-        >
-          <View style={[styles.actionIcon, { backgroundColor: '#F8F8F8' }]}>
-            <Icon name="account-edit" size={24} color="#007AFF" />
-          </View>
-          <Text style={styles.actionText}>Profili Düzenle</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.actionButton} 
-          onPress={() => navigation.navigate('ProfileNotificationScreen')}
-        >
-          <View style={[styles.actionIcon, { backgroundColor: '#F8F8F8' }]}>
-            <Icon name="bell" size={24} color="#007AFF" />
-          </View>
-          <Text style={styles.actionText}>Bildirimler</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.actionButton} 
-          onPress={() => navigation.navigate('SettingsScreen')}
-        >
-          <View style={[styles.actionIcon, { backgroundColor: '#F8F8F8' }]}>
-            <Icon name="cog" size={24} color="#007AFF" />
-          </View>
-          <Text style={styles.actionText}>Ayarlar</Text>
-        </TouchableOpacity>
       </View>
 
       {/* Menu Items */}
       <View style={styles.menuContainer}>
-        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('MyAppointments')}>
-          <View style={[styles.menuIcon, { backgroundColor: '#F8F8F8' }]}>
-            <Icon name="calendar-clock" size={24} color="#007AFF" />
+        <TouchableOpacity 
+          style={styles.menuItem} 
+          onPress={() => navigation.navigate('EditProfileScreen')}
+        >
+          <Icon name="account-edit" size={24} color="#007AFF" style={styles.menuIcon} />
+          <View style={styles.menuContent}>
+            <Text style={styles.menuText}>Profili Düzenle</Text>
+            <Text style={styles.menuSubtext}>Kişisel bilgilerinizi güncelleyin</Text>
           </View>
+          <Icon name="chevron-right" size={24} color="#C7C7CC" />
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.menuItem} 
+          onPress={() => navigation.navigate('MyAppointments')}
+        >
+          <Icon name="calendar-clock" size={24} color="#007AFF" style={styles.menuIcon} />
           <View style={styles.menuContent}>
             <Text style={styles.menuText}>Randevularım</Text>
             <Text style={styles.menuSubtext}>Tüm randevularınızı görüntüleyin</Text>
           </View>
-          <Icon name="chevron-right" size={24} color="#007AFF" />
+          <Icon name="chevron-right" size={24} color="#C7C7CC" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('FavoritePlaces')}>
-          <View style={[styles.menuIcon, { backgroundColor: '#F8F8F8' }]}>
-            <Icon name="heart" size={24} color="#007AFF" />
-          </View>
+        <TouchableOpacity 
+          style={styles.menuItem} 
+          onPress={() => navigation.navigate('FavoritePlaces')}
+        >
+          <Icon name="heart" size={24} color="#007AFF" style={styles.menuIcon} />
           <View style={styles.menuContent}>
             <Text style={styles.menuText}>Favori Mekanlarım</Text>
             <Text style={styles.menuSubtext}>Kaydettiğiniz mekanlar</Text>
           </View>
-          <Icon name="chevron-right" size={24} color="#007AFF" />
+          <Icon name="chevron-right" size={24} color="#C7C7CC" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('MyReviews')}>
-          <View style={[styles.menuIcon, { backgroundColor: '#F8F8F8' }]}>
-            <Icon name="star" size={24} color="#007AFF" />
-          </View>
+        <TouchableOpacity 
+          style={styles.menuItem} 
+          onPress={() => navigation.navigate('ProfileNotificationScreen')}
+        >
+          <Icon name="bell" size={24} color="#007AFF" style={styles.menuIcon} />
           <View style={styles.menuContent}>
-            <Text style={styles.menuText}>Değerlendirmelerim</Text>
-            <Text style={styles.menuSubtext}>Yaptığınız tüm değerlendirmeler</Text>
+            <Text style={styles.menuText}>Bildirimler</Text>
+            <Text style={styles.menuSubtext}>Bildirim tercihlerinizi yönetin</Text>
           </View>
-          <Icon name="chevron-right" size={24} color="#007AFF" />
+          <Icon name="chevron-right" size={24} color="#C7C7CC" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('AddressSettings')}>
-          <View style={[styles.menuIcon, { backgroundColor: '#F8F8F8' }]}>
-            <Icon name="map-marker" size={24} color="#007AFF" />
-          </View>
+        <TouchableOpacity 
+          style={styles.menuItem} 
+          onPress={() => navigation.navigate('SettingsScreen')}
+        >
+          <Icon name="cog" size={24} color="#007AFF" style={styles.menuIcon} />
           <View style={styles.menuContent}>
-            <Text style={styles.menuText}>Kayıtlı Adreslerim</Text>
-            <Text style={styles.menuSubtext}>Adres bilgilerinizi yönetin</Text>
+            <Text style={styles.menuText}>Ayarlar</Text>
+            <Text style={styles.menuSubtext}>Uygulama ayarlarını düzenleyin</Text>
           </View>
-          <Icon name="chevron-right" size={24} color="#007AFF" />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('SecuritySettings')}>
-          <View style={[styles.menuIcon, { backgroundColor: '#F8F8F8' }]}>
-            <Icon name="shield-check" size={24} color="#007AFF" />
-          </View>
-          <View style={styles.menuContent}>
-            <Text style={styles.menuText}>Güvenlik Ayarları</Text>
-            <Text style={styles.menuSubtext}>Hesap güvenliğinizi yönetin</Text>
-          </View>
-          <Icon name="chevron-right" size={24} color="#007AFF" />
+          <Icon name="chevron-right" size={24} color="#C7C7CC" />
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -159,50 +287,43 @@ const ProfileScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: '#F2F2F7',
   },
   contentContainer: {
-    paddingBottom: 60,
+    paddingBottom: 30,
   },
   header: {
     backgroundColor: '#FFF',
     alignItems: 'center',
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    paddingBottom: 30,
+    paddingVertical: 30,
     borderBottomWidth: 1,
-    borderBottomColor: '#EFEFEF',
+    borderBottomColor: '#E5E5EA',
   },
   profileImageContainer: {
     position: 'relative',
     marginBottom: 16,
   },
   profileImage: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    borderWidth: 4,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 3,
     borderColor: '#FFF',
   },
   editImageButton: {
     position: 'absolute',
-    right: -4,
-    bottom: -4,
+    right: 0,
+    bottom: 0,
     backgroundColor: '#007AFF',
     padding: 8,
-    borderRadius: 20,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  headerInfo: {
-    alignItems: 'center',
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#FFF',
   },
   name: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#000',
     marginBottom: 4,
   },
   email: {
@@ -213,10 +334,10 @@ const styles = StyleSheet.create({
   locationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8F8F8',
+    backgroundColor: '#F2F2F7',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 20,
+    borderRadius: 16,
   },
   location: {
     fontSize: 14,
@@ -226,109 +347,100 @@ const styles = StyleSheet.create({
   statsContainer: {
     flexDirection: 'row',
     backgroundColor: '#FFF',
-    marginTop: -20,
-    marginHorizontal: 20,
-    borderRadius: 15,
-    padding: 20,
-    elevation: 4,
+    marginHorizontal: 16,
+    marginTop: 16,
+    borderRadius: 12,
+    padding: 16,
+    justifyContent: 'space-around',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  statColumn: {
-    flex: 1,
-    alignItems: 'center',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   statItem: {
     alignItems: 'center',
+    flex: 1,
   },
   statNumber: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#007AFF',
     marginBottom: 4,
   },
   statLabel: {
-    fontSize: 13,
+    fontSize: 14,
     color: '#666',
-    textAlign: 'center',
   },
   statDivider: {
     width: 1,
-    height: 40,
-    backgroundColor: '#EFEFEF',
-  },
-  quickActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 24,
-    paddingHorizontal: 15,
-    backgroundColor: '#FFF',
-    marginTop: 12,
-  },
-  actionButton: {
-    alignItems: 'center',
-  },
-  actionIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-  },
-  actionText: {
-    fontSize: 13,
-    color: '#333',
-    textAlign: 'center',
-    fontWeight: '500',
+    height: '70%',
+    backgroundColor: '#E5E5EA',
+    alignSelf: 'center',
   },
   menuContainer: {
     backgroundColor: '#FFF',
-    borderRadius: 15,
-    marginHorizontal: 20,
-    marginBottom: 30,
-    marginTop: 12,
-    padding: 5,
-    elevation: 2,
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 45,
+    borderRadius: 12,
+    overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F8F8F8',
+    borderBottomColor: '#E5E5EA',
   },
   menuIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
     marginRight: 16,
+    width: 24,
   },
   menuContent: {
     flex: 1,
   },
   menuText: {
     fontSize: 16,
-    color: '#333',
+    color: '#000',
     fontWeight: '500',
   },
   menuSubtext: {
     fontSize: 13,
     color: '#666',
     marginTop: 2,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 
